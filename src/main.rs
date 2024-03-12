@@ -8,6 +8,7 @@ use teloxide::{
 };
 
 pub mod receive_info;
+pub mod utils;
 use crate::receive_info::*;
 
 type MyDialogue = Dialogue<State, InMemStorage<State>>;
@@ -31,12 +32,21 @@ async fn main() {
 fn schema() -> UpdateHandler<Box<dyn std::error::Error + Send + Sync + 'static>> {
     use dptree::case;
 
-    let command_handler = teloxide::filter_command::<Command, _>().branch(
-        case![State::Start]
-            .branch(case![Command::Help].endpoint(help))
-            .branch(case![Command::Start].endpoint(start))
+    let command_handler = teloxide::filter_command::<Command, _>()
+        .branch(case![State::Start].branch(case![Command::Start].endpoint(start)))
+        .branch(
+            case![State::Final {
+                gender,
+                age,
+                height,
+                weight,
+                physical_activity_level,
+                goal
+            }]
             .branch(case![Command::Portfolio].endpoint(portfolio)),
-    );
+        )
+        .branch(case![Command::Help].endpoint(help))
+        .branch(case![Command::Test].endpoint(test_func));
 
     let message_handler = Update::filter_message()
         .branch(command_handler)

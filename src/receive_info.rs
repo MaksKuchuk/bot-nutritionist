@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
-use teloxide::{dispatching::dialogue::InMemStorage, prelude::*, utils::command::BotCommands};
+use teloxide::{prelude::*, types::KeyboardRemove, utils::command::BotCommands};
 
-use crate::{HandlerResult, MyDialogue};
+use crate::{utils::create_keyboard, HandlerResult, MyDialogue};
 
 #[derive(Clone, Default)]
 pub enum State {
@@ -53,6 +53,25 @@ pub enum Command {
     Start,
     #[command(description = "получить информацио о пользователе.")]
     Portfolio,
+    #[command(description = "debug command.")]
+    Test,
+}
+
+pub async fn test_func(bot: Bot, _dialogue: MyDialogue, msg: Message) -> HandlerResult {
+    let keyboard = create_keyboard(
+        2,
+        vec![
+            &Gender::Male.to_string(),
+            &Gender::Female.to_string(),
+            &Gender::RyanGosling.to_string(),
+        ],
+    );
+
+    bot.send_message(msg.chat.id, "lalala.")
+        .reply_markup(keyboard)
+        .await?;
+
+    Ok(())
 }
 
 #[derive(Clone, Default)]
@@ -149,7 +168,17 @@ impl FromStr for Goal {
 }
 
 pub async fn start(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
-    bot.send_message(msg.chat.id, "Выберите свой пол").await?;
+    let keyboard = create_keyboard(
+        3,
+        vec![
+            &Gender::Male.to_string(),
+            &Gender::Female.to_string(),
+            &Gender::RyanGosling.to_string(),
+        ],
+    );
+    bot.send_message(msg.chat.id, "Выберите свой пол")
+        .reply_markup(keyboard)
+        .await?;
     dialogue.update(State::ReceiveGender).await?;
     Ok(())
 }
@@ -158,10 +187,16 @@ pub async fn receive_gender(bot: Bot, dialogue: MyDialogue, msg: Message) -> Han
     match msg.text() {
         Some(gender) => {
             let gen = Gender::from_str(gender);
-            if let Ok(g) = gen {
-                bot.send_message(msg.chat.id, "Укажите свой возраст")
-                    .await?;
-                dialogue.update(State::ReceiveAge { gender: g }).await?;
+            match gen {
+                Ok(g) => {
+                    bot.send_message(msg.chat.id, "Укажите свой возраст")
+                        .reply_markup(KeyboardRemove::new())
+                        .await?;
+                    dialogue.update(State::ReceiveAge { gender: g }).await?;
+                }
+                Err(_) => {
+                    let _ = bot.send_message(msg.chat.id, "Выберите свой пол").await?;
+                }
             }
         }
         None => {
@@ -179,13 +214,20 @@ pub async fn receive_age(
 ) -> HandlerResult {
     match msg.text() {
         Some(age) => {
-            let ag = age.parse::<u16>();
-            if let Ok(a) = ag {
-                bot.send_message(msg.chat.id, "Укажите свой рост в сантиметрах")
-                    .await?;
-                dialogue
-                    .update(State::ReceiveHeight { gender, age: a })
-                    .await?;
+            let age = age.parse::<u16>();
+            match age {
+                Ok(a) => {
+                    bot.send_message(msg.chat.id, "Укажите свой рост в сантиметрах")
+                        .await?;
+                    dialogue
+                        .update(State::ReceiveHeight { gender, age: a })
+                        .await?;
+                }
+                Err(_) => {
+                    let _ = bot
+                        .send_message(msg.chat.id, "Укажите свой возраст")
+                        .await?;
+                }
             }
         }
         None => {
@@ -204,16 +246,23 @@ pub async fn receive_height(
     match msg.text() {
         Some(height) => {
             let height = height.parse::<u16>();
-            if let Ok(h) = height {
-                bot.send_message(msg.chat.id, "Укажите свой вес в килограммах")
-                    .await?;
-                dialogue
-                    .update(State::ReceiveWeight {
-                        gender,
-                        age,
-                        height: h,
-                    })
-                    .await?;
+            match height {
+                Ok(h) => {
+                    bot.send_message(msg.chat.id, "Укажите свой вес в килограммах")
+                        .await?;
+                    dialogue
+                        .update(State::ReceiveWeight {
+                            gender,
+                            age,
+                            height: h,
+                        })
+                        .await?;
+                }
+                Err(_) => {
+                    let _ = bot
+                        .send_message(msg.chat.id, "Укажите свой рост в сантиметрах")
+                        .await?;
+                }
             }
         }
         None => {
@@ -232,17 +281,33 @@ pub async fn receive_weight(
     match msg.text() {
         Some(weight) => {
             let weight = weight.parse::<u16>();
-            if let Ok(w) = weight {
-                bot.send_message(msg.chat.id, "Выберите уровень физической активности")
-                    .await?;
-                dialogue
-                    .update(State::ReceivePhysicalActivityLevel {
-                        gender,
-                        age,
-                        height,
-                        weight: w,
-                    })
-                    .await?;
+            match weight {
+                Ok(w) => {
+                    let keyboard = create_keyboard(
+                        3,
+                        vec![
+                            &PhysicalActivityLevel::Low.to_string(),
+                            &PhysicalActivityLevel::Moderate.to_string(),
+                            &PhysicalActivityLevel::High.to_string(),
+                        ],
+                    );
+                    bot.send_message(msg.chat.id, "Выберите уровень физической активности")
+                        .reply_markup(keyboard)
+                        .await?;
+                    dialogue
+                        .update(State::ReceivePhysicalActivityLevel {
+                            gender,
+                            age,
+                            height,
+                            weight: w,
+                        })
+                        .await?;
+                }
+                Err(_) => {
+                    let _ = bot
+                        .send_message(msg.chat.id, "Укажите свой вес в килограммах")
+                        .await?;
+                }
             }
         }
         None => {
@@ -261,17 +326,34 @@ pub async fn receive_physical_activity_level(
     match msg.text() {
         Some(pal) => {
             let pal = PhysicalActivityLevel::from_str(pal);
-            if let Ok(pal) = pal {
-                bot.send_message(msg.chat.id, "Выберите цель").await?;
-                dialogue
-                    .update(State::ReceiveGoal {
-                        gender,
-                        age,
-                        height,
-                        weight,
-                        physical_activity_level: pal,
-                    })
-                    .await?;
+            match pal {
+                Ok(p) => {
+                    let keyboard = create_keyboard(
+                        3,
+                        vec![
+                            &Goal::WeightLoss.to_string(),
+                            &Goal::WeightMaintenance.to_string(),
+                            &Goal::WeightMaintenance.to_string(),
+                        ],
+                    );
+                    bot.send_message(msg.chat.id, "Выберите цель")
+                        .reply_markup(keyboard)
+                        .await?;
+                    dialogue
+                        .update(State::ReceiveGoal {
+                            gender,
+                            age,
+                            height,
+                            weight,
+                            physical_activity_level: p,
+                        })
+                        .await?;
+                }
+                Err(_) => {
+                    let _ = bot
+                        .send_message(msg.chat.id, "Выберите уровень физической активности")
+                        .await?;
+                }
             }
         }
         None => {
@@ -296,18 +378,25 @@ pub async fn receive_goal(
     match msg.text() {
         Some(goal) => {
             let goal = Goal::from_str(goal);
-            if let Ok(g) = goal {
-                bot.send_message(msg.chat.id, "Успех.").await?;
-                dialogue
-                    .update(State::Final {
-                        gender,
-                        age,
-                        height,
-                        weight,
-                        physical_activity_level,
-                        goal: g,
-                    })
-                    .await?;
+            match goal {
+                Ok(g) => {
+                    bot.send_message(msg.chat.id, "Успех")
+                        .reply_markup(KeyboardRemove::new())
+                        .await?;
+                    dialogue
+                        .update(State::Final {
+                            gender,
+                            age,
+                            height,
+                            weight,
+                            physical_activity_level,
+                            goal: g,
+                        })
+                        .await?;
+                }
+                Err(_) => {
+                    let _ = bot.send_message(msg.chat.id, "Выберите цель").await?;
+                }
             }
         }
         None => {
@@ -317,7 +406,7 @@ pub async fn receive_goal(
     Ok(())
 }
 
-pub async fn portfolio(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
+pub async fn portfolio(bot: Bot, _dialogue: MyDialogue, msg: Message) -> HandlerResult {
     bot.send_message(msg.chat.id, "Портфолио").await?;
     Ok(())
 }
