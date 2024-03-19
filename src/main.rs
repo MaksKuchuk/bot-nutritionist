@@ -1,3 +1,5 @@
+use dotenv::dotenv;
+use std::env;
 use teloxide::{
     dispatching::{
         dialogue::{self, InMemStorage},
@@ -7,6 +9,10 @@ use teloxide::{
     utils::command::BotCommands,
 };
 
+use diesel::prelude::*;
+use diesel::sqlite::SqliteConnection;
+
+pub mod model;
 pub mod receive_info;
 pub mod utils;
 use crate::receive_info::*;
@@ -16,6 +22,7 @@ type HandlerResult = Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
     pretty_env_logger::init();
     log::info!("Starting nutritionist bot");
 
@@ -27,6 +34,14 @@ async fn main() {
         .build()
         .dispatch()
         .await;
+}
+
+pub fn establish_connection() -> SqliteConnection {
+    dotenv().ok();
+
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    SqliteConnection::establish(&database_url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
 fn schema() -> UpdateHandler<Box<dyn std::error::Error + Send + Sync + 'static>> {
