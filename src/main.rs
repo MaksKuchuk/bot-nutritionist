@@ -12,10 +12,27 @@ use teloxide::{
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 
+use crate::{
+    main_functions::{
+        diet::diet,
+        notifications::notifications,
+        pfc::pfc,
+        pfcfood::pfcfood,
+        portfolio::{
+            portfolio, receive_age, receive_gender, receive_goal, receive_height,
+            receive_physical_activity_level, receive_weight,
+        },
+        start, start_state,
+    },
+    state::{Command, State},
+    utils::test_func,
+};
+
+pub mod domain;
+pub mod main_functions;
 pub mod model;
-pub mod receive_info;
+pub mod state;
 pub mod utils;
-use crate::receive_info::*;
 
 type MyDialogue = Dialogue<State, InMemStorage<State>>;
 type HandlerResult = Result<(), Box<dyn std::error::Error + Send + Sync>>;
@@ -48,17 +65,15 @@ fn schema() -> UpdateHandler<Box<dyn std::error::Error + Send + Sync + 'static>>
     use dptree::case;
 
     let command_handler = teloxide::filter_command::<Command, _>()
-        .branch(case![State::Start].branch(case![Command::Start].endpoint(start)))
         .branch(
-            case![State::Final {
-                gender,
-                age,
-                height,
-                weight,
-                physical_activity_level,
-                goal
-            }]
-            .branch(case![Command::Portfolio].endpoint(portfolio)),
+            case![State::Start]
+                .branch(case![Command::Start].endpoint(start))
+                .branch(case![Command::Portfolio].endpoint(portfolio))
+                .branch(case![Command::Diet].endpoint(diet))
+                .branch(case![Command::PFC].endpoint(pfc))
+                .branch(case![Command::PFCFood].endpoint(pfcfood))
+                .branch(case![Command::Notifications].endpoint(notifications)),
+            // .branch(start_state),
         )
         .branch(case![Command::Help].endpoint(help))
         .branch(case![Command::Test].endpoint(test_func));

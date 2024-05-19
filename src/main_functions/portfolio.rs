@@ -1,173 +1,20 @@
 use std::str::FromStr;
 
-use teloxide::{prelude::*, types::KeyboardRemove, utils::command::BotCommands};
+use teloxide::{
+    payloads::SendMessageSetters,
+    requests::Requester,
+    types::{KeyboardRemove, Message},
+    Bot,
+};
 
-use crate::{utils::create_keyboard, HandlerResult, MyDialogue};
+use crate::{
+    domain::profile_domain::{Gender, Goal, PhysicalActivityLevel},
+    state::State,
+    utils::create_keyboard,
+    HandlerResult, MyDialogue,
+};
 
-#[derive(Clone, Default)]
-pub enum State {
-    #[default]
-    Start,
-    ReceiveGender,
-    ReceiveAge {
-        gender: Gender,
-    },
-    ReceiveHeight {
-        gender: Gender,
-        age: u16,
-    },
-    ReceiveWeight {
-        gender: Gender,
-        age: u16,
-        height: u16,
-    },
-    ReceivePhysicalActivityLevel {
-        gender: Gender,
-        age: u16,
-        height: u16,
-        weight: u16,
-    },
-    ReceiveGoal {
-        gender: Gender,
-        age: u16,
-        height: u16,
-        weight: u16,
-        physical_activity_level: PhysicalActivityLevel,
-    },
-    Final {
-        gender: Gender,
-        age: u16,
-        height: u16,
-        weight: u16,
-        physical_activity_level: PhysicalActivityLevel,
-        goal: Goal,
-    },
-}
-
-#[derive(BotCommands, Clone)]
-#[command(rename_rule = "lowercase", description = "Поддерживаемые команды:")]
-pub enum Command {
-    #[command(description = "вывести этот текст.")]
-    Help,
-    #[command(description = "начать чат с ботом.")]
-    Start,
-    #[command(description = "получить информацио о пользователе.")]
-    Portfolio,
-    #[command(description = "debug command.")]
-    Test,
-}
-
-pub async fn test_func(bot: Bot, _dialogue: MyDialogue, msg: Message) -> HandlerResult {
-    let keyboard = create_keyboard(
-        2,
-        vec![
-            &Gender::Male.to_string(),
-            &Gender::Female.to_string(),
-            &Gender::RyanGosling.to_string(),
-        ],
-    );
-
-    bot.send_message(msg.chat.id, "lalala.")
-        .reply_markup(keyboard)
-        .await?;
-
-    Ok(())
-}
-
-#[derive(Clone, Default)]
-pub enum Gender {
-    #[default]
-    Male,
-    Female,
-    RyanGosling,
-}
-
-impl ToString for Gender {
-    fn to_string(&self) -> String {
-        let string_literal = match self {
-            Gender::Male => "Мужской",
-            Gender::Female => "Женский",
-            Gender::RyanGosling => "Раян Гослинг",
-        };
-        string_literal.to_owned()
-    }
-}
-
-impl FromStr for Gender {
-    type Err = ();
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "Мужской" => Ok(Gender::Male),
-            "Женский" => Ok(Gender::Female),
-            "Раян Гослинг" => Ok(Gender::RyanGosling),
-            _ => Err(()),
-        }
-    }
-}
-
-#[derive(Clone, Default)]
-pub enum PhysicalActivityLevel {
-    #[default]
-    Low,
-    Moderate,
-    High,
-}
-
-impl ToString for PhysicalActivityLevel {
-    fn to_string(&self) -> String {
-        let string_literal = match self {
-            PhysicalActivityLevel::Low => "Низкий",
-            PhysicalActivityLevel::Moderate => "Средний",
-            PhysicalActivityLevel::High => "Высокий",
-        };
-        string_literal.to_owned()
-    }
-}
-
-impl FromStr for PhysicalActivityLevel {
-    type Err = ();
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "Низкий" => Ok(PhysicalActivityLevel::Low),
-            "Средний" => Ok(PhysicalActivityLevel::Moderate),
-            "Высокий" => Ok(PhysicalActivityLevel::High),
-            _ => Err(()),
-        }
-    }
-}
-
-#[derive(Clone, Default)]
-pub enum Goal {
-    #[default]
-    WeightLoss,
-    WeightMaintenance,
-    WeightGain,
-}
-
-impl ToString for Goal {
-    fn to_string(&self) -> String {
-        let string_literal = match self {
-            Goal::WeightLoss => "Похудение",
-            Goal::WeightMaintenance => "Поддержание веса",
-            Goal::WeightGain => "Массанабор",
-        };
-        string_literal.to_owned()
-    }
-}
-
-impl FromStr for Goal {
-    type Err = ();
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "Похудение" => Ok(Goal::WeightLoss),
-            "Поддержание веса" => Ok(Goal::WeightMaintenance),
-            "Массанабор" => Ok(Goal::WeightGain),
-            _ => Err(()),
-        }
-    }
-}
-
-pub async fn start(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
+pub async fn edit_portfolio(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
     let keyboard = create_keyboard(
         3,
         vec![
@@ -379,20 +226,11 @@ pub async fn receive_goal(
         Some(goal) => {
             let goal = Goal::from_str(goal);
             match goal {
-                Ok(g) => {
+                Ok(_) => {
                     bot.send_message(msg.chat.id, "Успех")
                         .reply_markup(KeyboardRemove::new())
                         .await?;
-                    dialogue
-                        .update(State::Final {
-                            gender,
-                            age,
-                            height,
-                            weight,
-                            physical_activity_level,
-                            goal: g,
-                        })
-                        .await?;
+                    dialogue.update(State::Start).await?;
                 }
                 Err(_) => {
                     let _ = bot.send_message(msg.chat.id, "Выберите цель").await?;
@@ -407,6 +245,7 @@ pub async fn receive_goal(
 }
 
 pub async fn portfolio(bot: Bot, _dialogue: MyDialogue, msg: Message) -> HandlerResult {
-    bot.send_message(msg.chat.id, "Портфолио").await?;
+    edit_portfolio(bot, _dialogue, msg).await?;
+    // bot.send_message(msg.chat.id, "Портфолио").await?;
     Ok(())
 }
