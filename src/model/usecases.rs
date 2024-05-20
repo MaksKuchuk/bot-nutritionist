@@ -1,13 +1,13 @@
-use diesel::sqlite::SqliteConnection;
+use diesel::result::Error;
+use diesel::{RunQueryDsl, SqliteConnection};
 
-pub fn create_user(conn: &mut PgConnection, title: &str, body: &str) -> Post {
-    use crate::schema::posts;
+use crate::model::{NewUser, User};
+use crate::schema::users::dsl::users;
 
-    let new_post = NewPost { title, body };
+pub fn create_user(conn: &mut SqliteConnection, user: NewUser) -> Result<usize, Error> {
+    diesel::insert_into(users).values(&user).execute(conn)
+}
 
-    diesel::insert_into(posts::table)
-        .values(&new_post)
-        .returning(Post::as_returning())
-        .get_result(conn)
-        .expect("Error saving new post")
+pub fn get_user(conn: &mut SqliteConnection) -> Result<User, Error> {
+    users.first::<User>(conn)
 }

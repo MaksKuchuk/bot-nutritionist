@@ -1,9 +1,17 @@
 use teloxide::{
+    requests::Requester,
     types::{KeyboardButton, KeyboardMarkup, Message},
     Bot,
 };
 
-use crate::{HandlerResult, MyDialogue};
+use crate::{
+    establish_connection,
+    model::{
+        usecases::{create_user, get_user},
+        NewUser,
+    },
+    HandlerResult, MyDialogue,
+};
 
 pub fn create_keyboard(items_in_row: usize, items: Vec<&str>) -> KeyboardMarkup {
     let mut keyboard: Vec<Vec<KeyboardButton>> = vec![];
@@ -24,7 +32,7 @@ pub fn create_keyboard(items_in_row: usize, items: Vec<&str>) -> KeyboardMarkup 
         .persistent()
 }
 
-pub async fn test_func(bot: Bot, _dialogue: MyDialogue, msg: Message) -> HandlerResult {
+pub async fn test_func1(bot: Bot, _dialogue: MyDialogue, msg: Message) -> HandlerResult {
     // let keyboard = create_keyboard(
     //     2,
     //     vec![
@@ -41,6 +49,44 @@ pub async fn test_func(bot: Bot, _dialogue: MyDialogue, msg: Message) -> Handler
     // bot.send_message(msg.chat.id, "")
     //     .reply_markup(keyboard)
     //     .await?;
+
+    Ok(())
+}
+
+pub async fn test_func2(bot: Bot, _dialogue: MyDialogue, msg: Message) -> HandlerResult {
+    let conn = &mut establish_connection();
+
+    create_user(
+        conn,
+        NewUser {
+            id: 1i32,
+            gender: 0i32,
+            age: 0i32,
+            height: 0i32,
+            weight: 0i32,
+            physical_activity_level: 0i32,
+            goal: 0i32,
+        },
+    );
+
+    bot.send_message(msg.chat.id, "Все ок").await?;
+
+    Ok(())
+}
+
+pub async fn test_func3(bot: Bot, _dialogue: MyDialogue, msg: Message) -> HandlerResult {
+    let conn = &mut establish_connection();
+
+    let usr = &get_user(conn).unwrap();
+
+    bot.send_message(
+        msg.chat.id,
+        format!(
+            "{} \n {} \n {} \n {}",
+            usr.gender, usr.age, usr.height, usr.goal
+        ),
+    )
+    .await?;
 
     Ok(())
 }

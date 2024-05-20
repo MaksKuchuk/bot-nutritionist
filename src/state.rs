@@ -63,5 +63,7 @@ pub enum Command {
     #[command(description = "уведомления о приеме пищи.")]
     Notifications,
     #[command(description = "debug command.")]
-    Test,
+    Test1,
+    Test2,
+    Test3,
 }

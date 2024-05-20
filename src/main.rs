@@ -26,12 +26,13 @@ use crate::{
         start,
     },
     state::{Command, State},
-    utils::test_func,
+    utils::{test_func1, test_func2, test_func3},
 };
 
 pub mod domain;
 pub mod main_functions;
 pub mod model;
+pub mod schema;
 pub mod state;
 pub mod utils;
 
@@ -55,8 +56,6 @@ async fn main() {
 }
 
 pub fn establish_connection() -> SqliteConnection {
-    dotenv().ok();
-
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     SqliteConnection::establish(&database_url)
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
@@ -73,7 +72,9 @@ fn schema() -> UpdateHandler<Box<dyn std::error::Error + Send + Sync + 'static>>
         .branch(case![Command::PFCFood].endpoint(pfcfood))
         .branch(case![Command::Notifications].endpoint(notifications))
         .branch(case![Command::Help].endpoint(help))
-        .branch(case![Command::Test].endpoint(test_func));
+        .branch(case![Command::Test1].endpoint(test_func1))
+        .branch(case![Command::Test2].endpoint(test_func2))
+        .branch(case![Command::Test3].endpoint(test_func3));
 
     let message_handler = Update::filter_message()
         .branch(command_handler)
