@@ -1,7 +1,5 @@
 use teloxide::{
-    payloads::SendMessageSetters,
-    requests::Requester,
-    types::{InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, KeyboardMarkup, Message},
+    types::{KeyboardButton, KeyboardMarkup, Message},
     Bot,
 };
 
@@ -36,11 +34,11 @@ pub async fn test_func(bot: Bot, _dialogue: MyDialogue, msg: Message) -> Handler
     //     ],
     // );
 
-    let c = "command";
-    let url_button = InlineKeyboardButton::callback("text", c);
-    let keyboard = InlineKeyboardMarkup::default().append_row(vec![url_button]);
+    // let c = "command";
+    // let url_button = InlineKeyboardButton::callback("text", c);
+    // let keyboard = InlineKeyboardMarkup::default().append_row(vec![url_button]);
 
-    // bot.send_message(msg.chat.id, "lalala.")
+    // bot.send_message(msg.chat.id, "")
     //     .reply_markup(keyboard)
     //     .await?;
 

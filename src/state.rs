@@ -1,11 +1,12 @@
-use crate::domain::profile_domain::{Gender, Goal, PhysicalActivityLevel};
+use crate::domain::profile_domain::{Gender, PhysicalActivityLevel};
 use teloxide::utils::command::BotCommands;
 
 #[derive(Clone, Default)]
 pub enum State {
     #[default]
     Start,
-    Portfolio,
+
+    Profile,
     ReceiveGender,
     ReceiveAge {
         gender: Gender,
@@ -32,14 +33,16 @@ pub enum State {
         weight: u16,
         physical_activity_level: PhysicalActivityLevel,
     },
-    Final {
-        gender: Gender,
-        age: u16,
-        height: u16,
-        weight: u16,
-        physical_activity_level: PhysicalActivityLevel,
-        goal: Goal,
-    },
+
+    Diet,
+    DietCreate,
+    DietEdit,
+    DietRemove,
+    BuySubscription,
+    DietConstructor,
+    DietExample,
+
+    Notifications,
 }
 
 #[derive(BotCommands, Clone)]
@@ -50,7 +53,7 @@ pub enum Command {
     #[command(description = "начать чат с ботом.")]
     Start,
     #[command(description = "получить информацио о пользователе.")]
-    Portfolio,
+    Profile,
     #[command(description = "рацион питания.")]
     Diet,
     #[command(description = "рассчет дневной нормы БЖУ")]

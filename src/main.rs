@@ -14,15 +14,16 @@ use diesel::sqlite::SqliteConnection;
 
 use crate::{
     main_functions::{
-        diet::diet,
-        notifications::notifications,
+        diet::{diet, diet_create_parser, diet_edit_parser, diet_parser, diet_remove_parser},
+        main_functions_parser,
+        notifications::{notifications, notifications_parser},
         pfc::pfc,
         pfcfood::pfcfood,
-        portfolio::{
-            portfolio, receive_age, receive_gender, receive_goal, receive_height,
+        profile::{
+            profile, profile_parser, receive_age, receive_gender, receive_goal, receive_height,
             receive_physical_activity_level, receive_weight,
         },
-        start, start_state,
+        start,
     },
     state::{Command, State},
     utils::test_func,
@@ -65,21 +66,20 @@ fn schema() -> UpdateHandler<Box<dyn std::error::Error + Send + Sync + 'static>>
     use dptree::case;
 
     let command_handler = teloxide::filter_command::<Command, _>()
-        .branch(
-            case![State::Start]
-                .branch(case![Command::Start].endpoint(start))
-                .branch(case![Command::Portfolio].endpoint(portfolio))
-                .branch(case![Command::Diet].endpoint(diet))
-                .branch(case![Command::PFC].endpoint(pfc))
-                .branch(case![Command::PFCFood].endpoint(pfcfood))
-                .branch(case![Command::Notifications].endpoint(notifications)),
-            // .branch(start_state),
-        )
+        .branch(case![Command::Start].endpoint(start))
+        .branch(case![Command::Profile].endpoint(profile))
+        .branch(case![Command::Diet].endpoint(diet))
+        .branch(case![Command::PFC].endpoint(pfc))
+        .branch(case![Command::PFCFood].endpoint(pfcfood))
+        .branch(case![Command::Notifications].endpoint(notifications))
         .branch(case![Command::Help].endpoint(help))
         .branch(case![Command::Test].endpoint(test_func));
 
     let message_handler = Update::filter_message()
         .branch(command_handler)
+        .branch(case![State::Start].endpoint(main_functions_parser))
+        //
+        .branch(case![State::Profile].endpoint(profile_parser))
         .branch(case![State::ReceiveGender].endpoint(receive_gender))
         .branch(case![State::ReceiveAge { gender }].endpoint(receive_age))
         .branch(case![State::ReceiveHeight { gender, age }].endpoint(receive_height))
@@ -110,19 +110,17 @@ fn schema() -> UpdateHandler<Box<dyn std::error::Error + Send + Sync + 'static>>
             }]
             .endpoint(receive_goal),
         )
+        //
+        .branch(case![State::Diet].endpoint(diet_parser))
+        .branch(case![State::DietCreate].endpoint(diet_create_parser))
+        .branch(case![State::DietEdit].endpoint(diet_edit_parser))
+        .branch(case![State::DietRemove].endpoint(diet_remove_parser))
+        //
+        .branch(case![State::Notifications].endpoint(notifications_parser))
+        //
         .branch(dptree::endpoint(invalid_state));
 
-    let callback_query_handler = Update::filter_callback_query().branch(
-        case![State::Final {
-            gender,
-            age,
-            height,
-            weight,
-            physical_activity_level,
-            goal
-        }]
-        .endpoint(portfolio),
-    );
+    let callback_query_handler = Update::filter_callback_query();
 
     dialogue::enter::<Update, InMemStorage<State>, State, _>()
         .branch(message_handler)

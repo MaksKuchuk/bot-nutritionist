@@ -14,7 +14,9 @@ use crate::{
     HandlerResult, MyDialogue,
 };
 
-pub async fn edit_portfolio(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
+use super::to_main_functions;
+
+pub async fn edit_profile(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
     let keyboard = create_keyboard(
         3,
         vec![
@@ -230,7 +232,7 @@ pub async fn receive_goal(
                     bot.send_message(msg.chat.id, "Успех")
                         .reply_markup(KeyboardRemove::new())
                         .await?;
-                    dialogue.update(State::Start).await?;
+                    to_main_functions(bot, dialogue, msg).await?;
                 }
                 Err(_) => {
                     let _ = bot.send_message(msg.chat.id, "Выберите цель").await?;
@@ -244,8 +246,18 @@ pub async fn receive_goal(
     Ok(())
 }
 
-pub async fn portfolio(bot: Bot, _dialogue: MyDialogue, msg: Message) -> HandlerResult {
-    edit_portfolio(bot, _dialogue, msg).await?;
-    // bot.send_message(msg.chat.id, "Портфолио").await?;
+pub async fn profile(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
+    dialogue.update(State::Profile).await?;
+    bot.send_message(msg.chat.id, "Профиль (TODO)")
+        .reply_markup(create_keyboard(2, vec!["Изменить", "Назад"]))
+        .await?;
     Ok(())
+}
+
+pub async fn profile_parser(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
+    match msg.text() {
+        Some("Изменить") => edit_profile(bot, dialogue, msg).await,
+        Some("Назад") => to_main_functions(bot, dialogue, msg).await,
+        _ => Ok(()),
+    }
 }
