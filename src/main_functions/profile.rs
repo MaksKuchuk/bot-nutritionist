@@ -9,12 +9,49 @@ use teloxide::{
 
 use crate::{
     domain::profile_domain::{Gender, Goal, PhysicalActivityLevel},
+    establish_connection,
+    model::{
+        usecases::{create_update_user, get_user},
+        NewUser,
+    },
     state::State,
-    utils::create_keyboard,
+    utils::{create_keyboard, get_user_id},
     HandlerResult, MyDialogue,
 };
 
 use super::to_main_functions;
+
+pub async fn profile(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
+    dialogue.update(State::Profile).await?;
+
+    let conn = &mut establish_connection();
+
+    let user_profile = match get_user_id(&msg) {
+        Some(userid) => {
+            match get_user(conn, userid) {
+                Some(user) => format!("Профиль: \n\t Пол: {} \n\t Возраст: {} \n\t Рост: {} \n\t Вес: {} \n\t Уровень физической активности: {} \n\t Цель: {}", user.gender, user.age, user.height, user.weight, user.physical_activity_level, user.goal),
+                None => "Профиль пуст".to_string()
+            }
+        },
+        None => {
+            log::error!("message don't have user id");
+            "".to_string()
+        }
+    };
+
+    bot.send_message(msg.chat.id, user_profile)
+        .reply_markup(create_keyboard(2, vec!["Изменить", "Назад"]))
+        .await?;
+    Ok(())
+}
+
+pub async fn profile_parser(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
+    match msg.text() {
+        Some("Изменить") => edit_profile(bot, dialogue, msg).await,
+        Some("Назад") => to_main_functions(bot, dialogue, msg).await,
+        _ => Ok(()),
+    }
+}
 
 pub async fn edit_profile(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
     let keyboard = create_keyboard(
@@ -49,7 +86,7 @@ pub async fn receive_gender(bot: Bot, dialogue: MyDialogue, msg: Message) -> Han
             }
         }
         None => {
-            bot.send_message(msg.chat.id, "Ошибка.").await?;
+            bot.send_message(msg.chat.id, "Ошибка").await?;
         }
     }
     Ok(())
@@ -80,7 +117,7 @@ pub async fn receive_age(
             }
         }
         None => {
-            bot.send_message(msg.chat.id, "Ошибка.").await?;
+            bot.send_message(msg.chat.id, "Ошибка").await?;
         }
     }
     Ok(())
@@ -115,7 +152,7 @@ pub async fn receive_height(
             }
         }
         None => {
-            bot.send_message(msg.chat.id, "Ошибка.").await?;
+            bot.send_message(msg.chat.id, "Ошибка").await?;
         }
     }
     Ok(())
@@ -135,9 +172,13 @@ pub async fn receive_weight(
                     let keyboard = create_keyboard(
                         3,
                         vec![
-                            &PhysicalActivityLevel::Low.to_string(),
-                            &PhysicalActivityLevel::Moderate.to_string(),
+                            &PhysicalActivityLevel::Minimal.to_string(),
+                            &PhysicalActivityLevel::Little.to_string(),
+                            &PhysicalActivityLevel::Average.to_string(),
+                            &PhysicalActivityLevel::AboveAverage.to_string(),
+                            &PhysicalActivityLevel::Increased.to_string(),
                             &PhysicalActivityLevel::High.to_string(),
+                            &PhysicalActivityLevel::VeryHigh.to_string(),
                         ],
                     );
                     bot.send_message(msg.chat.id, "Выберите уровень физической активности")
@@ -160,7 +201,7 @@ pub async fn receive_weight(
             }
         }
         None => {
-            bot.send_message(msg.chat.id, "Ошибка.").await?;
+            bot.send_message(msg.chat.id, "Ошибка").await?;
         }
     }
     Ok(())
@@ -182,7 +223,7 @@ pub async fn receive_physical_activity_level(
                         vec![
                             &Goal::WeightLoss.to_string(),
                             &Goal::WeightMaintenance.to_string(),
-                            &Goal::WeightMaintenance.to_string(),
+                            &Goal::WeightGain.to_string(),
                         ],
                     );
                     bot.send_message(msg.chat.id, "Выберите цель")
@@ -206,7 +247,7 @@ pub async fn receive_physical_activity_level(
             }
         }
         None => {
-            bot.send_message(msg.chat.id, "Ошибка.").await?;
+            bot.send_message(msg.chat.id, "Ошибка").await?;
         }
     }
     Ok(())
@@ -228,10 +269,33 @@ pub async fn receive_goal(
         Some(goal) => {
             let goal = Goal::from_str(goal);
             match goal {
-                Ok(_) => {
-                    bot.send_message(msg.chat.id, "Успех")
-                        .reply_markup(KeyboardRemove::new())
-                        .await?;
+                Ok(goal) => {
+                    let conn = &mut establish_connection();
+
+                    match get_user_id(&msg) {
+                        Some(userid) => {
+                            let usr = NewUser {
+                                id: userid,
+                                gender: gender.to_string(),
+                                age: age as i32,
+                                height: height as i32,
+                                weight: weight as i32,
+                                physical_activity_level: physical_activity_level.to_string(),
+                                goal: goal.to_string(),
+                            };
+
+                            bot.send_message(
+                                msg.chat.id,
+                                if create_update_user(conn, usr) {
+                                    "Успех"
+                                } else {
+                                    "Профиль не сохранен. Попробуйте еще раз"
+                                },
+                            )
+                            .await?;
+                        }
+                        None => (),
+                    }
                     to_main_functions(bot, dialogue, msg).await?;
                 }
                 Err(_) => {
@@ -240,24 +304,8 @@ pub async fn receive_goal(
             }
         }
         None => {
-            bot.send_message(msg.chat.id, "Ошибка.").await?;
+            bot.send_message(msg.chat.id, "Ошибка").await?;
         }
     }
     Ok(())
-}
-
-pub async fn profile(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
-    dialogue.update(State::Profile).await?;
-    bot.send_message(msg.chat.id, "Профиль (TODO)")
-        .reply_markup(create_keyboard(2, vec!["Изменить", "Назад"]))
-        .await?;
-    Ok(())
-}
-
-pub async fn profile_parser(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
-    match msg.text() {
-        Some("Изменить") => edit_profile(bot, dialogue, msg).await,
-        Some("Назад") => to_main_functions(bot, dialogue, msg).await,
-        _ => Ok(()),
-    }
 }

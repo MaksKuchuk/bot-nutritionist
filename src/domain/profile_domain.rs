@@ -34,18 +34,27 @@ impl FromStr for Gender {
 #[derive(Clone, Default)]
 pub enum PhysicalActivityLevel {
     #[default]
-    Low,
-    Moderate,
+    Minimal,
+    Little,
+    Average,
+    AboveAverage,
+    Increased,
     High,
+    VeryHigh,
 }
 
 impl ToString for PhysicalActivityLevel {
     fn to_string(&self) -> String {
         let string_literal = match self {
-            PhysicalActivityLevel::Low => "Низкий",
-            PhysicalActivityLevel::Moderate => "Средний",
+            PhysicalActivityLevel::Minimal => "Минимальный",
+            PhysicalActivityLevel::Little => "Небольшой",
+            PhysicalActivityLevel::Average => "Средний",
+            PhysicalActivityLevel::AboveAverage => "Выше среднего",
+            PhysicalActivityLevel::Increased => "Повышенный",
             PhysicalActivityLevel::High => "Высокий",
+            PhysicalActivityLevel::VeryHigh => "Очень высокий",
         };
+
         string_literal.to_owned()
     }
 }
@@ -54,9 +63,13 @@ impl FromStr for PhysicalActivityLevel {
     type Err = ();
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "Низкий" => Ok(PhysicalActivityLevel::Low),
-            "Средний" => Ok(PhysicalActivityLevel::Moderate),
+            "Минимальный" => Ok(PhysicalActivityLevel::Minimal),
+            "Небольшой" => Ok(PhysicalActivityLevel::Little),
+            "Средний" => Ok(PhysicalActivityLevel::Average),
+            "Выше среднего" => Ok(PhysicalActivityLevel::AboveAverage),
+            "Повышенный" => Ok(PhysicalActivityLevel::Increased),
             "Высокий" => Ok(PhysicalActivityLevel::High),
+            "Очень высокий" => Ok(PhysicalActivityLevel::VeryHigh),
             _ => Err(()),
         }
     }

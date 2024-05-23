@@ -42,6 +42,15 @@ pub enum State {
     DietConstructor,
     DietExample,
 
+    PFCFood,
+    PFCFoodMeat,
+    PFCFoodFish,
+    PFCFoodMilk,
+    PFCFoodBread,
+    PFCFoodCerealPasta,
+    PFCFoodFruitVegetableBerry,
+    PFCFoodJuice,
+
     Notifications,
 }
 
@@ -56,9 +65,9 @@ pub enum Command {
     Profile,
     #[command(description = "рацион питания.")]
     Diet,
-    #[command(description = "рассчет дневной нормы БЖУ")]
+    #[command(description = "рассчет дневной нормы КБЖУ")]
     PFC,
-    #[command(description = "пример продуктов с текущей нормой БЖУ")]
+    #[command(description = "пример продуктов с текущей нормой КБЖУ")]
     PFCFood,
     #[command(description = "уведомления о приеме пищи.")]
     Notifications,

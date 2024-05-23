@@ -1,53 +1,42 @@
 use diesel::prelude::*;
 
-use crate::schema::users;
+use crate::schema::{Foods, Users};
 pub mod usecases;
 
-#[derive(Queryable, Selectable)]
-#[diesel(table_name = users)]
+#[derive(Queryable, Selectable, Debug)]
+#[diesel(table_name = Users)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct User {
-    pub id: i32,
-    pub gender: i32,
-    pub age: i32,
-    pub height: i32,
-    pub weight: i32,
-    pub physical_activity_level: i32,
-    pub goal: i32,
-}
-
-#[derive(Insertable)]
-#[diesel(table_name = users)]
-pub struct NewUser {
-    pub id: i32,
-    pub gender: i32,
-    pub age: i32,
-    pub height: i32,
-    pub weight: i32,
-    pub physical_activity_level: i32,
-    pub goal: i32,
-}
-
-#[derive(Queryable, Selectable)]
-#[diesel(table_name = crate::schema::genders)]
-#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
-pub struct Gender {
-    pub id: i32,
+    pub id: String,
     pub gender: String,
-}
-
-#[derive(Queryable, Selectable)]
-#[diesel(table_name = crate::schema::physical_activity_levels)]
-#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
-pub struct PhysicalActivityLevel {
-    pub id: i32,
+    pub age: i32,
+    pub height: i32,
+    pub weight: i32,
     pub physical_activity_level: String,
+    pub goal: String,
 }
 
-#[derive(Queryable, Selectable)]
-#[diesel(table_name = crate::schema::goals)]
-#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
-pub struct Goal {
-    pub id: i32,
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = Users)]
+pub struct NewUser {
+    pub id: String,
+    pub gender: String,
+    pub age: i32,
+    pub height: i32,
+    pub weight: i32,
+    pub physical_activity_level: String,
     pub goal: String,
+}
+
+#[derive(Queryable, Selectable, Debug)]
+#[diesel(table_name = Foods)]
+#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
+pub struct Food {
+    pub id: i32,
+    pub name: String,
+    pub kcal: i32,
+    pub protein: i32,
+    pub fat: i32,
+    pub carbohydrate: i32,
+    pub category: String,
 }

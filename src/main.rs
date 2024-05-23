@@ -18,7 +18,7 @@ use crate::{
         main_functions_parser,
         notifications::{notifications, notifications_parser},
         pfc::pfc,
-        pfcfood::pfcfood,
+        pfcfood::{pfcfood, pfcfood_parser},
         profile::{
             profile, profile_parser, receive_age, receive_gender, receive_goal, receive_height,
             receive_physical_activity_level, receive_weight,
@@ -116,6 +116,8 @@ fn schema() -> UpdateHandler<Box<dyn std::error::Error + Send + Sync + 'static>>
         .branch(case![State::DietCreate].endpoint(diet_create_parser))
         .branch(case![State::DietEdit].endpoint(diet_edit_parser))
         .branch(case![State::DietRemove].endpoint(diet_remove_parser))
+        //
+        .branch(case![State::PFCFood].endpoint(pfcfood_parser))
         //
         .branch(case![State::Notifications].endpoint(notifications_parser))
         //
