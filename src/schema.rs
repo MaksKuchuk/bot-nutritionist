@@ -1,6 +1,16 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    DietDishes (id) {
+        id -> Integer,
+        dietid -> Integer,
+        datetime -> Text,
+        dish -> Text,
+        kcal -> Integer,
+    }
+}
+
+diesel::table! {
     Foods (id) {
         id -> Integer,
         name -> Text,
@@ -9,6 +19,14 @@ diesel::table! {
         fat -> Integer,
         carbohydrate -> Integer,
         category -> Text,
+    }
+}
+
+diesel::table! {
+    UserDiets (dietid) {
+        dietid -> Integer,
+        userid -> Text,
+        name -> Text,
     }
 }
 
@@ -24,4 +42,4 @@ diesel::table! {
     }
 }
 
-diesel::allow_tables_to_appear_in_same_query!(Foods, Users,);
+diesel::allow_tables_to_appear_in_same_query!(DietDishes, Foods, UserDiets, Users,);

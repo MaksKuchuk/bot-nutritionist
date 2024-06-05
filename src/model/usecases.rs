@@ -3,6 +3,8 @@ use diesel::{ExpressionMethods, RunQueryDsl, SelectableHelper, SqliteConnection}
 
 use crate::model::{Food, NewUser, User};
 
+use super::{NewUserDiet, UserDiet};
+
 pub fn create_update_user(conn: &mut SqliteConnection, user: NewUser) -> bool {
     use crate::schema::Users::dsl::*;
 
@@ -16,6 +18,31 @@ pub fn create_update_user(conn: &mut SqliteConnection, user: NewUser) -> bool {
             Ok(_) => true,
             _ => false,
         },
+    }
+}
+
+pub fn create_diet(conn: &mut SqliteConnection, user_diet: NewUserDiet) -> bool {
+    use crate::schema::UserDiets::dsl::*;
+
+    match diesel::insert_into(UserDiets)
+        .values(&user_diet)
+        .execute(conn)
+    {
+        Ok(_) => true,
+        o => false,
+    }
+}
+
+pub fn get_diets_by_userid(conn: &mut SqliteConnection, usrid: String) -> Option<Vec<UserDiet>> {
+    use crate::schema::UserDiets::dsl::*;
+
+    match UserDiets
+        .filter(userid.eq(usrid))
+        .select(UserDiet::as_select())
+        .load(conn)
+    {
+        Ok(d) => Some(d),
+        _ => None,
     }
 }
 

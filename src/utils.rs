@@ -12,7 +12,7 @@ use crate::{
     establish_connection,
     model::{
         usecases::{create_update_user, get_user},
-        Food, NewUser, User,
+        Food, NewUser, User, UserDiet,
     },
     HandlerResult, MyDialogue,
 };
@@ -95,6 +95,16 @@ pub fn get_string_foods(foods: Vec<Food>) -> String {
             "{}: \n\t Ккал: {} \n\t Белки: {}г \n\t Жиры: {}г \n\t Углеводы: {}г \n\n",
             f.name, f.kcal, f.protein, f.fat, f.carbohydrate
         );
+    }
+
+    str
+}
+
+pub fn get_string_diets(diets: Vec<UserDiet>) -> String {
+    let mut str = String::from("Рационы питания: \n");
+
+    for d in diets {
+        str += &format!("\t{} \n", d.name);
     }
 
     str

@@ -5,7 +5,6 @@ pub enum Gender {
     #[default]
     Male,
     Female,
-    RyanGosling,
 }
 
 impl ToString for Gender {
@@ -13,7 +12,6 @@ impl ToString for Gender {
         let string_literal = match self {
             Gender::Male => "Мужской",
             Gender::Female => "Женский",
-            Gender::RyanGosling => "Раян Гослинг",
         };
         string_literal.to_owned()
     }
@@ -25,7 +23,6 @@ impl FromStr for Gender {
         match s {
             "Мужской" => Ok(Gender::Male),
             "Женский" => Ok(Gender::Female),
-            "Раян Гослинг" => Ok(Gender::RyanGosling),
             _ => Err(()),
         }
     }

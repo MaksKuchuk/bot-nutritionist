@@ -14,7 +14,10 @@ use diesel::sqlite::SqliteConnection;
 
 use crate::{
     main_functions::{
-        diet::{diet, diet_create_parser, diet_edit_parser, diet_parser, diet_remove_parser},
+        diet::{
+            diet, diet_constructor_parser, diet_create_parser, diet_edit_parser, diet_parser,
+            diet_remove_parser,
+        },
         main_functions_parser,
         notifications::{notifications, notifications_parser},
         pfc::pfc,
@@ -116,6 +119,7 @@ fn schema() -> UpdateHandler<Box<dyn std::error::Error + Send + Sync + 'static>>
         .branch(case![State::DietCreate].endpoint(diet_create_parser))
         .branch(case![State::DietEdit].endpoint(diet_edit_parser))
         .branch(case![State::DietRemove].endpoint(diet_remove_parser))
+        .branch(case![State::DietConstructor].endpoint(diet_constructor_parser))
         //
         .branch(case![State::PFCFood].endpoint(pfcfood_parser))
         //

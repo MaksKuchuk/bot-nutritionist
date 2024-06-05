@@ -56,11 +56,7 @@ pub async fn profile_parser(bot: Bot, dialogue: MyDialogue, msg: Message) -> Han
 pub async fn edit_profile(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
     let keyboard = create_keyboard(
         3,
-        vec![
-            &Gender::Male.to_string(),
-            &Gender::Female.to_string(),
-            &Gender::RyanGosling.to_string(),
-        ],
+        vec![&Gender::Male.to_string(), &Gender::Female.to_string()],
     );
     bot.send_message(msg.chat.id, "Выберите свой пол")
         .reply_markup(keyboard)
