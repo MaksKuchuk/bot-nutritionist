@@ -3,7 +3,7 @@ use teloxide::{payloads::SendMessageSetters, requests::Requester, types::Message
 use crate::{
     establish_connection,
     model::{
-        usecases::{create_diet, get_diets_by_userid},
+        usecases::{create_diet, delete_diet, get_diets_by_userid, get_diets_by_userid_name},
         NewUserDiet,
     },
     state::State,
@@ -50,9 +50,7 @@ pub async fn diet_parser(bot: Bot, dialogue: MyDialogue, msg: Message) -> Handle
 pub async fn diet_create(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
     dialogue.update(State::DietCreate).await?;
     bot.send_message(msg.chat.id, "Создание рациона питания.")
-        .reply_markup(
-            create_keyboard(2, vec!["Конструктор рациона", "Назад"]).one_time_keyboard(true),
-        )
+        .reply_markup(create_keyboard(2, vec!["Конструктор рациона", "Назад"]))
         .await?;
     Ok(())
 }
@@ -69,6 +67,7 @@ pub async fn diet_create_parser(bot: Bot, dialogue: MyDialogue, msg: Message) ->
 pub async fn diet_constructor(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
     dialogue.update(State::DietConstructor).await?;
     bot.send_message(msg.chat.id, "Введите название рациона: ")
+        .reply_markup(create_keyboard(2, vec!["Назад"]))
         .await?;
     Ok(())
 }
@@ -79,11 +78,19 @@ pub async fn diet_constructor_parser(
     msg: Message,
 ) -> HandlerResult {
     match msg.text() {
+        Some("Назад") => (),
         Some(txt) => {
             let conn = &mut establish_connection();
 
             match get_user_id(&msg) {
                 Some(userid) => {
+                    if let Some(_) = get_diets_by_userid_name(conn, userid.clone(), txt.to_string())
+                    {
+                        bot.send_message(msg.chat.id, "Рацион с таким названием уже существует")
+                            .await?;
+                        return Ok(());
+                    }
+
                     let usrdiet = NewUserDiet {
                         userid,
                         name: txt.to_string(),
@@ -110,7 +117,7 @@ pub async fn diet_constructor_parser(
 
 pub async fn diet_edit(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
     dialogue.update(State::DietEdit).await?;
-    bot.send_message(msg.chat.id, "Изменить рацион питания (TODO).")
+    bot.send_message(msg.chat.id, "Введите название рациона: ")
         .reply_markup(create_keyboard(1, vec!["Назад"]))
         .await?;
     Ok(())
@@ -119,13 +126,14 @@ pub async fn diet_edit(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerR
 pub async fn diet_edit_parser(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
     match msg.text() {
         Some("Назад") => diet(bot, dialogue, msg).await,
-        _ => Ok(()),
+        Some(txt) => Ok(()),
+        None => Ok(()),
     }
 }
 
 pub async fn diet_remove(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
     dialogue.update(State::DietRemove).await?;
-    bot.send_message(msg.chat.id, "Удалить рацион питания (TODO)")
+    bot.send_message(msg.chat.id, "Введите название рациона: ")
         .reply_markup(create_keyboard(1, vec!["Назад"]))
         .await?;
     Ok(())
@@ -134,6 +142,24 @@ pub async fn diet_remove(bot: Bot, dialogue: MyDialogue, msg: Message) -> Handle
 pub async fn diet_remove_parser(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
     match msg.text() {
         Some("Назад") => diet(bot, dialogue, msg).await,
-        _ => Ok(()),
+        Some(name) => match get_user_id(&msg) {
+            Some(userid) => {
+                let conn = &mut establish_connection();
+
+                bot.send_message(
+                    msg.chat.id,
+                    if delete_diet(conn, userid, name.to_string()) {
+                        format!("Рацион \'{name}\' удален")
+                    } else {
+                        format!("Ошибка удаления рациона \'{name}\'")
+                    },
+                )
+                .await?;
+                diet(bot, dialogue, msg).await?;
+                Ok(())
+            }
+            None => Ok(()),
+        },
+        None => Ok(()),
     }
 }

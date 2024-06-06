@@ -43,15 +43,15 @@ pub enum State {
     DietExample,
 
     PFCFood,
-    PFCFoodMeat,
-    PFCFoodFish,
-    PFCFoodMilk,
-    PFCFoodBread,
-    PFCFoodCerealPasta,
-    PFCFoodFruitVegetableBerry,
-    PFCFoodJuice,
-
+    // PFCFoodMeat,
+    // PFCFoodFish,
+    // PFCFoodMilk,
+    // PFCFoodBread,
+    // PFCFoodCerealPasta,
+    // PFCFoodFruitVegetableBerry,
+    // PFCFoodJuice,
     Notifications,
+    NotificationsChooseDiet,
 }
 
 #[derive(BotCommands, Clone)]

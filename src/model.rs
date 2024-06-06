@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 
-use crate::schema::{Foods, UserDiets, Users};
+use crate::schema::{ChoosenDiets, Foods, UserDiets, Users};
 pub mod usecases;
 
 #[derive(Queryable, Selectable, Debug)]
@@ -55,4 +55,21 @@ pub struct UserDiet {
 pub struct NewUserDiet {
     pub userid: String,
     pub name: String,
+}
+
+#[derive(Queryable, Selectable, Debug)]
+#[diesel(table_name = ChoosenDiets)]
+#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
+pub struct ChoosenDiet {
+    pub userid: String,
+    pub dietid: i32,
+    pub state: i32,
+}
+
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = ChoosenDiets)]
+pub struct NewChoosenDiet {
+    pub userid: String,
+    pub dietid: i32,
+    pub state: i32,
 }

@@ -1,6 +1,14 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    ChoosenDiets (userid) {
+        userid -> Text,
+        dietid -> Integer,
+        state -> Integer,
+    }
+}
+
+diesel::table! {
     DietDishes (id) {
         id -> Integer,
         dietid -> Integer,
@@ -42,4 +50,10 @@ diesel::table! {
     }
 }
 
-diesel::allow_tables_to_appear_in_same_query!(DietDishes, Foods, UserDiets, Users,);
+diesel::allow_tables_to_appear_in_same_query!(
+    ChoosenDiets,
+    DietDishes,
+    Foods,
+    UserDiets,
+    Users,
+);

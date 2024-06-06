@@ -103,6 +103,10 @@ pub fn get_string_foods(foods: Vec<Food>) -> String {
 pub fn get_string_diets(diets: Vec<UserDiet>) -> String {
     let mut str = String::from("Рационы питания: \n");
 
+    if diets.is_empty() {
+        str += "\t\t\tСписок пуст";
+    }
+
     for d in diets {
         str += &format!("\t{} \n", d.name);
     }

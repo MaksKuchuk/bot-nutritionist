@@ -1,4 +1,5 @@
 use dotenv::dotenv;
+use main_functions::notifications::notifications_choose_diet_parser;
 use std::env;
 use teloxide::{
     dispatching::{
@@ -124,6 +125,7 @@ fn schema() -> UpdateHandler<Box<dyn std::error::Error + Send + Sync + 'static>>
         .branch(case![State::PFCFood].endpoint(pfcfood_parser))
         //
         .branch(case![State::Notifications].endpoint(notifications_parser))
+        .branch(case![State::NotificationsChooseDiet].endpoint(notifications_choose_diet_parser))
         //
         .branch(dptree::endpoint(invalid_state));
 
