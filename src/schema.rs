@@ -9,6 +9,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    DietExamples (id) {
+        id -> Integer,
+        products -> Text,
+        weights -> Text,
+        proteins -> Integer,
+        fats -> Integer,
+        carbohydrates -> Integer,
+    }
+}
+
+diesel::table! {
     Foods (id) {
         id -> Integer,
         name -> Text,
@@ -43,6 +54,7 @@ diesel::table! {
 
 diesel::allow_tables_to_appear_in_same_query!(
     ChoosenDiets,
+    DietExamples,
     Foods,
     UserDiets,
     Users,

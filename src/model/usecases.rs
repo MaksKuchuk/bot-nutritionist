@@ -6,7 +6,7 @@ use crate::model::{Food, NewUser, User};
 use crate::schema::UserDiets;
 use crate::DbConnection;
 
-use super::{ChoosenDiet, NewChoosenDiet, NewUserDiet, UserDiet};
+use super::{ChoosenDiet, DietExample, NewChoosenDiet, NewUserDiet, UserDiet};
 
 pub fn create_update_user(conn: &mut DbConnection, user: NewUser) -> Result<(), Error> {
     use crate::schema::Users::dsl::*;
@@ -59,6 +59,21 @@ pub fn create_diet(conn: &mut DbConnection, user_diet: NewUserDiet) -> bool {
     {
         Ok(_) => true,
         Err(_) => false,
+    }
+}
+
+pub fn get_random_example_diet(conn: &mut DbConnection) -> Option<DietExample> {
+    match diesel::dsl::sql_query("SELECT * FROM DietExamples ORDER BY RANDOM()")
+        .load::<DietExample>(conn)
+    {
+        Ok(d) => {
+            if !d.is_empty() {
+                Some(d[0].to_owned())
+            } else {
+                None
+            }
+        }
+        _ => None,
     }
 }
 

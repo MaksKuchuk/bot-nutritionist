@@ -4,12 +4,16 @@ use crate::{
     get_db_connection,
     model::{
         usecases::{
-            create_diet, delete_diet, get_diets_by_userid, get_diets_by_userid_name, update_diet,
+            create_diet, delete_diet, get_diets_by_userid, get_diets_by_userid_name,
+            get_random_example_diet, get_user, update_diet,
         },
         NewUserDiet,
     },
     state::State,
-    utils::{create_keyboard, get_string_diets, get_user_id, is_diet_right},
+    utils::{
+        create_example_diet_string, create_keyboard, get_kcpfc, get_string_diets, get_user_id,
+        is_diet_right,
+    },
     HandlerResult, MyDialogue,
 };
 
@@ -32,8 +36,14 @@ pub async fn diet(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult
 
     bot.send_message(msg.chat.id, str)
         .reply_markup(create_keyboard(
-            2,
-            vec!["Создать", "Редактировать", "Удалить", "Назад"],
+            3,
+            vec![
+                "Создать",
+                "Редактировать",
+                "Удалить",
+                "Пример рациона",
+                "Назад",
+            ],
         ))
         .await?;
     Ok(())
@@ -44,9 +54,32 @@ pub async fn diet_parser(bot: Bot, dialogue: MyDialogue, msg: Message) -> Handle
         Some("Создать") => diet_create(bot, dialogue, msg).await,
         Some("Редактировать") => diet_edit(bot, dialogue, msg).await,
         Some("Удалить") => diet_remove(bot, dialogue, msg).await,
+        Some("Пример рациона") => diet_example(bot, dialogue, msg).await,
         Some("Назад") => to_main_functions(bot, dialogue, msg).await,
         _ => Ok(()),
     }
+}
+
+pub async fn diet_example(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
+    match get_user_id(&msg) {
+        Some(uid) => {
+            let conn = &mut get_db_connection();
+            let str = match get_user(conn, uid.clone()) {
+                Some(usr) => {
+                    let kcpfc = get_kcpfc(&usr);
+
+                    match get_random_example_diet(conn) {
+                        Some(v) => create_example_diet_string(v, kcpfc),
+                        None => "Рацион не найден".to_string(),
+                    }
+                }
+                None => "Для рассчета примерного рациона необходимо заполнить профиль".to_string(),
+            };
+            bot.send_message(msg.chat.id, str).await?;
+        }
+        None => (),
+    };
+    Ok(())
 }
 
 pub async fn diet_create(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {

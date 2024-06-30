@@ -1,3 +1,5 @@
+use std::iter::zip;
+
 use teloxide::{
     requests::Requester,
     types::{KeyboardButton, KeyboardMarkup, Message, MessageKind, UserId},
@@ -11,11 +13,13 @@ use crate::{
     },
     get_db_connection,
     model::{
-        usecases::{create_update_user, get_user},
-        Food, NewUser, User, UserDiet,
+        usecases::{create_update_user, get_random_example_diet, get_user},
+        DietExample, Food, NewUser, User, UserDiet,
     },
     HandlerResult, MyDialogue,
 };
+
+use itertools::izip;
 
 pub fn create_keyboard(items_in_row: usize, items: Vec<&str>) -> KeyboardMarkup {
     let mut keyboard: Vec<Vec<KeyboardButton>> = vec![];
@@ -209,6 +213,33 @@ pub fn is_diet_right(diet: &str) -> Result<(), String> {
     Ok(())
 }
 
+pub fn create_example_diet_string(diet: DietExample, kcpfc: KcPFC) -> String {
+    let products: Vec<&str> = diet.products.split("\\").collect();
+    let weights: Vec<&str> = diet.weights.split("\\").collect();
+    let time = vec!["8:00", "13:00", "19:00"];
+
+    let mut s = String::new();
+    s += &format!(
+        "Ориентир КБЖУ: \n\t Ккал: {} \n\t Белки: {}г \n\t Жиры: {}г \n\t Углеводы: {}г\n\n\n",
+        kcpfc.kcal, kcpfc.proteins, kcpfc.fats, kcpfc.carbohydrates
+    );
+    s += "Пример рациона для вашей дневной нормы КБЖУ:\n\n";
+
+    for (p, w, t) in izip!(&products, &weights, time) {
+        s += &format!("{}\n", t);
+        for (pname, wnum) in izip!(p.split(","), w.split(",")) {
+            s += &format!(
+                "\t\t {} {}гр\n",
+                pname.trim(),
+                (wnum.trim().parse::<f64>().unwrap() * (kcpfc.kcal as f64) / 1000f64) as u32
+            );
+        }
+        s += "\n";
+    }
+
+    s
+}
+
 pub async fn test_func1(bot: Bot, _dialogue: MyDialogue, msg: Message) -> HandlerResult {
     let _ = is_diet_right("8:20\nрис, 150, (2.9 25.2 0.4)\nтреска отварная, 50, (17.8 0 0.7)\nбелый хлеб, 50, (11 48 4)\n\n13:00\nгречка на воде, 150, (3.38 19.94 0.62)\nяйцо куриное вареное, 30, (13 1.12 10.61)\n\n19:10\nяблоко красное, 100, (0.4 17 0)\nбанан, 100, (1.2 22 0.2)");
     Ok(())
@@ -243,14 +274,7 @@ pub async fn test_func2(bot: Bot, _dialogue: MyDialogue, msg: Message) -> Handle
 pub async fn test_func3(bot: Bot, _dialogue: MyDialogue, msg: Message) -> HandlerResult {
     let conn = &mut get_db_connection();
 
-    let usrid = get_user_id(&msg).unwrap();
-
-    match get_user(conn, usrid) {
-        Some(u) => {
-            bot.send_message(msg.chat.id, format!("{:?}", u)).await?;
-        }
-        None => log::info!("user not found"),
-    };
+    dbg!(get_random_example_diet(conn));
 
     Ok(())
 }
