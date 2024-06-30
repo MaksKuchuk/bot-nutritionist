@@ -3,11 +3,13 @@ use teloxide::{payloads::SendMessageSetters, requests::Requester, types::Message
 use crate::{
     get_db_connection,
     model::{
-        usecases::{create_diet, delete_diet, get_diets_by_userid, get_diets_by_userid_name},
+        usecases::{
+            create_diet, delete_diet, get_diets_by_userid, get_diets_by_userid_name, update_diet,
+        },
         NewUserDiet,
     },
     state::State,
-    utils::{create_keyboard, get_string_diets, get_user_id},
+    utils::{create_keyboard, get_string_diets, get_user_id, is_diet_right},
     HandlerResult, MyDialogue,
 };
 
@@ -94,6 +96,7 @@ pub async fn diet_constructor_parser(
                     let usrdiet = NewUserDiet {
                         userid,
                         name: txt.to_string(),
+                        diet: String::new(),
                     };
 
                     bot.send_message(
@@ -126,7 +129,72 @@ pub async fn diet_edit(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerR
 pub async fn diet_edit_parser(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
     match msg.text() {
         Some("Назад") => diet(bot, dialogue, msg).await,
-        Some(txt) => Ok(()),
+        Some(name) => match get_user_id(&msg) {
+            Some(userid) => {
+                let conn = &mut get_db_connection();
+
+                match get_diets_by_userid_name(conn, userid.clone(), name.to_string()) {
+                    Some(_) => {
+                        bot.send_message(
+                                msg.chat.id,
+                                "Введите список приемов пищи, с временем в 24-х часовом формате, и продуктов питания, разделяя приемы пищи пустой строкой, а каждый новый продукт описывайте в формате (название, масса(в граммах), (БЖУ)). Пример:\n\n8:20\nрис, 150, (2.9 25.2 0.4)\nтреска отварная, 50, (17.8 0 0.7)\nбелый хлеб, 50, (11 48 4)\n\n13:00\nгречка на воде, 150, (3.38 19.94 0.62)\nяйцо куриное вареное, 30, (13 1.12 10.61)\n\n19:10\nяблоко красное, 100, (0.4 17 0)\nбанан, 100, (1.2 22 0.2)",
+                            )
+                            .reply_markup(create_keyboard(1, vec!["Назад"]))
+                            .await?;
+                        dialogue
+                            .update(State::DietEditName {
+                                name: name.to_string(),
+                                userid: userid,
+                            })
+                            .await?;
+                        Ok(())
+                    }
+                    None => diet_edit(bot, dialogue, msg).await,
+                }
+            }
+            None => Ok(()),
+        },
+        None => Ok(()),
+    }
+}
+
+pub async fn diet_edit_name_parser(
+    bot: Bot,
+    dialogue: MyDialogue,
+    (name, userid): (String, String),
+    msg: Message,
+) -> HandlerResult {
+    match msg.text() {
+        Some("Назад") => diet(bot, dialogue, msg).await,
+        Some(d) => match is_diet_right(d) {
+            Ok(()) => {
+                let conn = &mut get_db_connection();
+
+                let usrdiet = NewUserDiet {
+                    userid,
+                    name,
+                    diet: d.to_string(),
+                };
+
+                bot.send_message(
+                    msg.chat.id,
+                    if update_diet(conn, usrdiet) {
+                        "Рацион питания успешно обновлен"
+                    } else {
+                        "Рацион не обновлен. Попробуйте еще раз"
+                    },
+                )
+                .await?;
+                diet(bot, dialogue, msg).await?;
+                Ok(())
+            }
+            Err(s) => {
+                bot.send_message(msg.chat.id, s)
+                    .reply_markup(create_keyboard(1, vec!["Назад"]))
+                    .await?;
+                Ok(())
+            }
+        },
         None => Ok(()),
     }
 }

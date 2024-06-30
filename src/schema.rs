@@ -9,16 +9,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    DietDishes (id) {
-        id -> Integer,
-        dietid -> Integer,
-        datetime -> Text,
-        dish -> Text,
-        kcal -> Integer,
-    }
-}
-
-diesel::table! {
     Foods (id) {
         id -> Integer,
         name -> Text,
@@ -31,10 +21,11 @@ diesel::table! {
 }
 
 diesel::table! {
-    UserDiets (dietid) {
-        dietid -> Integer,
+    UserDiets (id) {
+        id -> Integer,
         userid -> Text,
         name -> Text,
+        diet -> Text,
     }
 }
 
@@ -52,7 +43,6 @@ diesel::table! {
 
 diesel::allow_tables_to_appear_in_same_query!(
     ChoosenDiets,
-    DietDishes,
     Foods,
     UserDiets,
     Users,

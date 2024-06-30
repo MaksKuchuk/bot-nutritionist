@@ -101,20 +101,116 @@ pub fn get_string_foods(foods: Vec<Food>) -> String {
 }
 
 pub fn get_string_diets(diets: Vec<UserDiet>) -> String {
-    let mut str = String::from("Рационы питания: \n");
+    let mut str = String::from("Рационы питания: \n\n");
 
     if diets.is_empty() {
         str += "\t\t\tСписок пуст";
     }
 
     for d in diets {
-        str += &format!("\t{} \n", d.name);
+        str += &format!("\t{}: \n{}\n\n\n", d.name, d.diet);
     }
 
     str
 }
 
+pub fn get_string_diets_pfc(diets: Vec<UserDiet>) -> String {
+    let mut s = String::new();
+
+    for d in diets {
+        s += &d.name;
+        s += ":\n";
+        let d = &d.diet;
+        let meals = d.trim().split("\n\n");
+
+        let (mut p, mut f, mut c) = (0f64, 0f64, 0f64);
+
+        for meal in meals {
+            let mealvec: Vec<&str> = meal.trim().split("\n").collect();
+
+            for food in &mealvec[1..] {
+                let v: Vec<&str> = food.trim().split(",").map(|item| item.trim()).collect();
+
+                let weight = v[1].parse::<f64>().unwrap() / 100f64;
+
+                let pfc: Vec<&str> = v[2].trim().split(" ").collect();
+                let (tp, tf, tc) = (
+                    &pfc[0][1..].parse::<f64>().unwrap(),
+                    pfc[1].parse::<f64>().unwrap(),
+                    &pfc[2][..(pfc[2].len() - 1)].parse::<f64>().unwrap(),
+                );
+                p += tp;
+                f += tf;
+                c += tc;
+            }
+        }
+
+        let k = p * 4f64 + f * 9f64 + c * 4f64;
+        s += &format!(
+            "\t Ккал: {:.1} \n\t Белки: {:.1}г \n\t Жиры: {:.1}г \n\t Углеводы: {:.1}г\n\n",
+            k, p, f, c
+        );
+    }
+
+    s
+}
+
+pub fn is_diet_right(diet: &str) -> Result<(), String> {
+    let meals = diet.trim().split("\n\n");
+    for meal in meals {
+        let mealvec: Vec<&str> = meal.trim().split("\n").collect();
+        if mealvec.is_empty() {
+            return Err("Ошибка форматирования".to_string());
+        }
+
+        let time = mealvec[0];
+        let timevec: Vec<&str> = time.trim().split(":").collect();
+        if timevec.len() != 2 {
+            return Err("Ошибка форматирования времени".to_string());
+        }
+        match (timevec[0].parse::<u32>(), timevec[1].parse::<u32>()) {
+            (Ok(h), Ok(m)) => {
+                if h > 24 || m > 59 {
+                    return Err("Ошибка форматирования времени".to_string());
+                }
+            }
+            _ => return Err("Ошибка форматирования времени".to_string()),
+        }
+
+        for food in &mealvec[1..] {
+            let v: Vec<&str> = food.trim().split(",").map(|item| item.trim()).collect();
+            if v.len() != 3 {
+                return Err("Ошибка форматирования продукта".to_string());
+            }
+
+            if let Err(_) = v[1].parse::<u32>() {
+                return Err("Ошибка форматирования продукта (неправильно указан вес)".to_string());
+            }
+
+            let pfc: Vec<&str> = v[2].trim().split(" ").collect();
+            if pfc.len() != 3 {
+                return Err("Ошибка форматирования продукта (неправильно указан БЖУ)".to_string());
+            }
+
+            if !pfc[0].starts_with("(") || !pfc[2].ends_with(")") {
+                return Err("Ошибка форматирования продукта (неправильно указан БЖУ)".to_string());
+            }
+
+            let pfc = vec![&pfc[0][1..], pfc[1], &pfc[2][..(pfc[2].len() - 1)]];
+            for item in pfc {
+                if let Err(_) = item.parse::<f32>() {
+                    return Err(
+                        "Ошибка форматирования продукта (неправильно указан БЖУ)".to_string()
+                    );
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
 pub async fn test_func1(bot: Bot, _dialogue: MyDialogue, msg: Message) -> HandlerResult {
+    let _ = is_diet_right("8:20\nрис, 150, (2.9 25.2 0.4)\nтреска отварная, 50, (17.8 0 0.7)\nбелый хлеб, 50, (11 48 4)\n\n13:00\nгречка на воде, 150, (3.38 19.94 0.62)\nяйцо куриное вареное, 30, (13 1.12 10.61)\n\n19:10\nяблоко красное, 100, (0.4 17 0)\nбанан, 100, (1.2 22 0.2)");
     Ok(())
 }
 

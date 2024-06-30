@@ -91,7 +91,7 @@ pub async fn notifications_choose_diet_parser(
                         Some(d) => {
                             let userdiet = NewChoosenDiet {
                                 userid: userid,
-                                dietid: d.dietid,
+                                dietid: d.id,
                                 state: 0,
                             };
 

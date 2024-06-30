@@ -37,6 +37,10 @@ pub enum State {
     Diet,
     DietCreate,
     DietEdit,
+    DietEditName {
+        name: String,
+        userid: String,
+    },
     DietRemove,
     BuySubscription,
     DietConstructor,

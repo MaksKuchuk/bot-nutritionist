@@ -3,6 +3,7 @@ use diesel::result::Error;
 use diesel::{Connection, ExpressionMethods, RunQueryDsl, SelectableHelper};
 
 use crate::model::{Food, NewUser, User};
+use crate::schema::UserDiets;
 use crate::DbConnection;
 
 use super::{ChoosenDiet, NewChoosenDiet, NewUserDiet, UserDiet};
@@ -61,6 +62,20 @@ pub fn create_diet(conn: &mut DbConnection, user_diet: NewUserDiet) -> bool {
     }
 }
 
+pub fn update_diet(conn: &mut DbConnection, user_diet: NewUserDiet) -> bool {
+    use crate::schema::UserDiets::dsl::*;
+
+    match diesel::update(UserDiets)
+        .filter(userid.eq(&user_diet.userid))
+        .filter(name.eq(&user_diet.name))
+        .set(&user_diet)
+        .execute(conn)
+    {
+        Ok(_) => true,
+        _ => false,
+    }
+}
+
 pub fn delete_diet(conn: &mut DbConnection, usrid: String, nm: String) -> bool {
     use crate::schema::UserDiets::dsl::*;
 
@@ -93,6 +108,7 @@ pub fn get_diets_by_userid_name(
     match UserDiets
         .filter(userid.eq(usrid))
         .filter(name.eq(nm))
+        .select(UserDiet::as_select())
         .first(conn)
     {
         Ok(d) => Some(d),
@@ -125,7 +141,11 @@ pub fn set_user_notification(conn: &mut DbConnection, usrid: String, st: i32) ->
 pub fn get_diet_by_id(conn: &mut DbConnection, did: i32) -> Option<UserDiet> {
     use crate::schema::UserDiets::dsl::*;
 
-    match UserDiets.filter(dietid.eq(did)).first(conn) {
+    match UserDiets
+        .filter(id.eq(did))
+        .select(UserDiet::as_select())
+        .first(conn)
+    {
         Ok(u) => Some(u),
         Err(_) => None,
     }

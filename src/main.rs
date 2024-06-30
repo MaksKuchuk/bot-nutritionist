@@ -1,6 +1,5 @@
 use dotenv::dotenv;
 use lazy_static::lazy_static;
-use main_functions::notifications::notifications_choose_diet_parser;
 use std::env;
 use teloxide::{
     dispatching::{
@@ -18,11 +17,11 @@ use diesel::{r2d2::ConnectionManager, Connection};
 use crate::{
     main_functions::{
         diet::{
-            diet, diet_constructor_parser, diet_create_parser, diet_edit_parser, diet_parser,
-            diet_remove_parser,
+            diet, diet_constructor_parser, diet_create_parser, diet_edit_name_parser,
+            diet_edit_parser, diet_parser, diet_remove_parser,
         },
         main_functions_parser,
-        notifications::{notifications, notifications_parser},
+        notifications::{notifications, notifications_choose_diet_parser, notifications_parser},
         pfc::pfc,
         pfcfood::{pfcfood, pfcfood_parser},
         profile::{
@@ -133,6 +132,7 @@ fn schema() -> UpdateHandler<Box<dyn std::error::Error + Send + Sync + 'static>>
         .branch(case![State::Diet].endpoint(diet_parser))
         .branch(case![State::DietCreate].endpoint(diet_create_parser))
         .branch(case![State::DietEdit].endpoint(diet_edit_parser))
+        .branch(case![State::DietEditName { name, userid }].endpoint(diet_edit_name_parser))
         .branch(case![State::DietRemove].endpoint(diet_remove_parser))
         .branch(case![State::DietConstructor].endpoint(diet_constructor_parser))
         //

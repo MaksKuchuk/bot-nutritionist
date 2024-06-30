@@ -45,9 +45,10 @@ pub struct Food {
 #[diesel(table_name = UserDiets)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct UserDiet {
-    pub dietid: i32,
+    pub id: i32,
     pub userid: String,
     pub name: String,
+    pub diet: String,
 }
 
 #[derive(Insertable, AsChangeset)]
@@ -55,6 +56,7 @@ pub struct UserDiet {
 pub struct NewUserDiet {
     pub userid: String,
     pub name: String,
+    pub diet: String,
 }
 
 #[derive(Queryable, Selectable, Debug)]
