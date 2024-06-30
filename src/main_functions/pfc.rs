@@ -1,7 +1,7 @@
 use teloxide::{requests::Requester, types::Message, Bot};
 
 use crate::{
-    establish_connection,
+    get_db_connection,
     model::usecases::get_user,
     utils::{get_kcpfc, get_user_id},
     HandlerResult, MyDialogue,
@@ -12,7 +12,7 @@ use super::to_main_functions;
 pub async fn pfc(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
     match get_user_id(&msg) {
         Some(uid) => {
-            let conn = &mut establish_connection();
+            let conn = &mut get_db_connection();
             let str = match get_user(conn, uid) {
                 Some(usr) => {
                     let kcpfc = get_kcpfc(&usr);

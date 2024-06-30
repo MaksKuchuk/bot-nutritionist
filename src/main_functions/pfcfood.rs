@@ -1,7 +1,7 @@
 use teloxide::{payloads::SendMessageSetters, requests::Requester, types::Message, Bot};
 
 use crate::{
-    establish_connection,
+    get_db_connection,
     model::usecases::get_food_by_category,
     state::State,
     utils::{create_keyboard, get_string_foods},
@@ -51,7 +51,7 @@ pub async fn pfcfood_parser(bot: Bot, dialogue: MyDialogue, msg: Message) -> Han
 }
 
 pub async fn get_pfcfood_string(cat: &str) -> String {
-    let conn = &mut establish_connection();
+    let conn = &mut get_db_connection();
 
     match get_food_by_category(conn, cat, 5) {
         Some(foods) => {

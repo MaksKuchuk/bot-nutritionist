@@ -9,7 +9,7 @@ use teloxide::{
 
 use crate::{
     domain::profile_domain::{Gender, Goal, PhysicalActivityLevel},
-    establish_connection,
+    get_db_connection,
     model::{
         usecases::{create_update_user, get_user},
         NewUser,
@@ -24,7 +24,7 @@ use super::to_main_functions;
 pub async fn profile(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
     dialogue.update(State::Profile).await?;
 
-    let conn = &mut establish_connection();
+    let conn = &mut get_db_connection();
 
     let user_profile = match get_user_id(&msg) {
         Some(userid) => {
@@ -266,7 +266,7 @@ pub async fn receive_goal(
             let goal = Goal::from_str(goal);
             match goal {
                 Ok(goal) => {
-                    let conn = &mut establish_connection();
+                    let conn = &mut get_db_connection();
 
                     match get_user_id(&msg) {
                         Some(userid) => {

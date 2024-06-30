@@ -1,0 +1,44 @@
+-- Your SQL goes here
+CREATE TABLE IF NOT EXISTS "Users" (
+	"id"	TEXT NOT NULL UNIQUE,
+	"gender"	TEXT NOT NULL,
+	"age"	INTEGER NOT NULL,
+	"height"	INTEGER NOT NULL,
+	"weight"	INTEGER NOT NULL,
+	"physical_activity_level"	TEXT NOT NULL,
+	"goal"	TEXT NOT NULL,
+	PRIMARY KEY("id")
+);
+CREATE TABLE IF NOT EXISTS "Foods" (
+	"id"	INTEGER NOT NULL UNIQUE,
+	"name"	TEXT NOT NULL,
+	"kcal"	INTEGER NOT NULL,
+	"protein"	INTEGER NOT NULL,
+	"fat"	INTEGER NOT NULL,
+	"carbohydrate"	INTEGER NOT NULL,
+	"category"	TEXT NOT NULL,
+	PRIMARY KEY("id")
+);
+CREATE TABLE IF NOT EXISTS "DietDishes" (
+	"id"	INTEGER NOT NULL UNIQUE,
+	"dietid"	INTEGER NOT NULL,
+	"datetime"	TEXT NOT NULL,
+	"dish"	TEXT NOT NULL,
+	"kcal"	INTEGER NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "UserDiets" (
+	"dietid"	INTEGER NOT NULL UNIQUE,
+	"userid"	TEXT NOT NULL,
+	"name"	TEXT NOT NULL,
+	PRIMARY KEY("dietid" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "ChoosenDiets" (
+	"userid"	TEXT NOT NULL UNIQUE,
+	"dietid"	INTEGER NOT NULL UNIQUE,
+	"state"	INTEGER NOT NULL,
+	PRIMARY KEY("userid")
+);
+CREATE INDEX IF NOT EXISTS "UserId" ON "Users" (
+	"id"	ASC
+);

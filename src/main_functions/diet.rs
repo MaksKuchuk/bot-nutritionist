@@ -1,7 +1,7 @@
 use teloxide::{payloads::SendMessageSetters, requests::Requester, types::Message, Bot};
 
 use crate::{
-    establish_connection,
+    get_db_connection,
     model::{
         usecases::{create_diet, delete_diet, get_diets_by_userid, get_diets_by_userid_name},
         NewUserDiet,
@@ -18,7 +18,7 @@ pub async fn diet(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult
 
     let str = match get_user_id(&msg) {
         Some(userid) => {
-            let conn = &mut establish_connection();
+            let conn = &mut get_db_connection();
             let d = get_diets_by_userid(conn, userid);
             match d {
                 Some(diets) => get_string_diets(diets),
@@ -80,7 +80,7 @@ pub async fn diet_constructor_parser(
     match msg.text() {
         Some("Назад") => (),
         Some(txt) => {
-            let conn = &mut establish_connection();
+            let conn = &mut get_db_connection();
 
             match get_user_id(&msg) {
                 Some(userid) => {
@@ -144,7 +144,7 @@ pub async fn diet_remove_parser(bot: Bot, dialogue: MyDialogue, msg: Message) ->
         Some("Назад") => diet(bot, dialogue, msg).await,
         Some(name) => match get_user_id(&msg) {
             Some(userid) => {
-                let conn = &mut establish_connection();
+                let conn = &mut get_db_connection();
 
                 bot.send_message(
                     msg.chat.id,

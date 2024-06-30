@@ -1,7 +1,7 @@
 use teloxide::{payloads::SendMessageSetters, requests::Requester, types::Message, Bot};
 
 use crate::{
-    establish_connection,
+    get_db_connection,
     model::{
         usecases::{
             create_update_userdiet, get_choosen_diet, get_diet_by_id, get_diets_by_userid,
@@ -21,7 +21,7 @@ pub async fn notifications(bot: Bot, dialogue: MyDialogue, msg: Message) -> Hand
 
     match get_user_id(&msg) {
         Some(userid) => {
-            let conn = &mut establish_connection();
+            let conn = &mut get_db_connection();
 
             let mut str = String::from(
                     "Вы можете ключить уведомления, которые будут оповещать вас за 10 минут до приема пищи",
@@ -82,7 +82,7 @@ pub async fn notifications_choose_diet_parser(
         Some("Назад") => notifications(bot, dialogue, msg).await,
         Some(name) => match get_user_id(&msg) {
             Some(userid) => {
-                let conn = &mut establish_connection();
+                let conn = &mut get_db_connection();
 
                 let diet = get_diets_by_userid_name(conn, userid.clone(), name.to_string());
                 bot.send_message(
@@ -124,7 +124,7 @@ pub async fn notifications_turn(
 ) -> HandlerResult {
     let str = match get_user_id(&msg) {
         Some(userid) => {
-            let conn = &mut establish_connection();
+            let conn = &mut get_db_connection();
 
             if set_user_notification(conn, userid, st) {
                 match st {

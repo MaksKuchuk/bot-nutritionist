@@ -1,11 +1,12 @@
 use diesel::query_dsl::methods::{FilterDsl, LimitDsl, SelectDsl};
-use diesel::{ExpressionMethods, RunQueryDsl, SelectableHelper, SqliteConnection};
+use diesel::{ExpressionMethods, RunQueryDsl, SelectableHelper};
 
 use crate::model::{Food, NewUser, User};
+use crate::DbConnection;
 
 use super::{ChoosenDiet, NewChoosenDiet, NewUserDiet, UserDiet};
 
-pub fn create_update_user(conn: &mut SqliteConnection, user: NewUser) -> bool {
+pub fn create_update_user(conn: &mut DbConnection, user: NewUser) -> bool {
     use crate::schema::Users::dsl::*;
 
     match diesel::insert_into(Users).values(&user).execute(conn) {
@@ -21,7 +22,7 @@ pub fn create_update_user(conn: &mut SqliteConnection, user: NewUser) -> bool {
     }
 }
 
-pub fn create_update_userdiet(conn: &mut SqliteConnection, userdiet: NewChoosenDiet) -> bool {
+pub fn create_update_userdiet(conn: &mut DbConnection, userdiet: NewChoosenDiet) -> bool {
     use crate::schema::ChoosenDiets::dsl::*;
 
     match diesel::insert_into(ChoosenDiets)
@@ -40,7 +41,7 @@ pub fn create_update_userdiet(conn: &mut SqliteConnection, userdiet: NewChoosenD
     }
 }
 
-pub fn create_diet(conn: &mut SqliteConnection, user_diet: NewUserDiet) -> bool {
+pub fn create_diet(conn: &mut DbConnection, user_diet: NewUserDiet) -> bool {
     use crate::schema::UserDiets::dsl::*;
 
     match diesel::insert_into(UserDiets)
@@ -52,7 +53,7 @@ pub fn create_diet(conn: &mut SqliteConnection, user_diet: NewUserDiet) -> bool 
     }
 }
 
-pub fn delete_diet(conn: &mut SqliteConnection, usrid: String, nm: String) -> bool {
+pub fn delete_diet(conn: &mut DbConnection, usrid: String, nm: String) -> bool {
     use crate::schema::UserDiets::dsl::*;
 
     match diesel::delete(UserDiets.filter(userid.eq(usrid)).filter(name.eq(nm))).execute(conn) {
@@ -61,7 +62,7 @@ pub fn delete_diet(conn: &mut SqliteConnection, usrid: String, nm: String) -> bo
     }
 }
 
-pub fn get_diets_by_userid(conn: &mut SqliteConnection, usrid: String) -> Option<Vec<UserDiet>> {
+pub fn get_diets_by_userid(conn: &mut DbConnection, usrid: String) -> Option<Vec<UserDiet>> {
     use crate::schema::UserDiets::dsl::*;
 
     match UserDiets
@@ -75,7 +76,7 @@ pub fn get_diets_by_userid(conn: &mut SqliteConnection, usrid: String) -> Option
 }
 
 pub fn get_diets_by_userid_name(
-    conn: &mut SqliteConnection,
+    conn: &mut DbConnection,
     usrid: String,
     nm: String,
 ) -> Option<UserDiet> {
@@ -91,7 +92,7 @@ pub fn get_diets_by_userid_name(
     }
 }
 
-pub fn get_choosen_diet(conn: &mut SqliteConnection, usrid: String) -> Option<ChoosenDiet> {
+pub fn get_choosen_diet(conn: &mut DbConnection, usrid: String) -> Option<ChoosenDiet> {
     use crate::schema::ChoosenDiets::dsl::*;
 
     match ChoosenDiets.filter(userid.eq(usrid)).first(conn) {
@@ -100,7 +101,7 @@ pub fn get_choosen_diet(conn: &mut SqliteConnection, usrid: String) -> Option<Ch
     }
 }
 
-pub fn set_user_notification(conn: &mut SqliteConnection, usrid: String, st: i32) -> bool {
+pub fn set_user_notification(conn: &mut DbConnection, usrid: String, st: i32) -> bool {
     use crate::schema::ChoosenDiets::dsl::*;
 
     match diesel::update(ChoosenDiets)
@@ -113,7 +114,7 @@ pub fn set_user_notification(conn: &mut SqliteConnection, usrid: String, st: i32
     }
 }
 
-pub fn get_diet_by_id(conn: &mut SqliteConnection, did: i32) -> Option<UserDiet> {
+pub fn get_diet_by_id(conn: &mut DbConnection, did: i32) -> Option<UserDiet> {
     use crate::schema::UserDiets::dsl::*;
 
     match UserDiets.filter(dietid.eq(did)).first(conn) {
@@ -122,7 +123,7 @@ pub fn get_diet_by_id(conn: &mut SqliteConnection, did: i32) -> Option<UserDiet>
     }
 }
 
-pub fn get_user(conn: &mut SqliteConnection, uid: String) -> Option<User> {
+pub fn get_user(conn: &mut DbConnection, uid: String) -> Option<User> {
     use crate::schema::Users::dsl::*;
 
     match Users.filter(id.eq(uid)).first::<User>(conn) {
@@ -131,11 +132,7 @@ pub fn get_user(conn: &mut SqliteConnection, uid: String) -> Option<User> {
     }
 }
 
-pub fn get_food_by_category(
-    conn: &mut SqliteConnection,
-    cat: &str,
-    amount: u32,
-) -> Option<Vec<Food>> {
+pub fn get_food_by_category(conn: &mut DbConnection, cat: &str, amount: u32) -> Option<Vec<Food>> {
     use crate::schema::Foods::dsl::*;
 
     match Foods

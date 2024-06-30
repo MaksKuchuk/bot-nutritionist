@@ -1,4 +1,5 @@
 use dotenv::dotenv;
+use lazy_static::lazy_static;
 use main_functions::notifications::notifications_choose_diet_parser;
 use std::env;
 use teloxide::{
@@ -10,8 +11,9 @@ use teloxide::{
     utils::command::BotCommands,
 };
 
-use diesel::prelude::*;
+use diesel::r2d2::{Pool, PooledConnection};
 use diesel::sqlite::SqliteConnection;
+use diesel::{r2d2::ConnectionManager, Connection};
 
 use crate::{
     main_functions::{
@@ -42,6 +44,20 @@ pub mod utils;
 
 type MyDialogue = Dialogue<State, InMemStorage<State>>;
 type HandlerResult = Result<(), Box<dyn std::error::Error + Send + Sync>>;
+type DbConnection = SqliteConnection;
+
+lazy_static! {
+    static ref POOL: Pool<ConnectionManager<DbConnection>> = get_connection_pool();
+}
+
+pub fn get_connection_pool() -> Pool<ConnectionManager<DbConnection>> {
+    let url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let manager = ConnectionManager::<DbConnection>::new(url);
+    Pool::builder()
+        .test_on_check_out(true)
+        .build(manager)
+        .expect("Could not build connection pool")
+}
 
 #[tokio::main]
 async fn main() {
@@ -59,10 +75,8 @@ async fn main() {
         .await;
 }
 
-pub fn establish_connection() -> SqliteConnection {
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    SqliteConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+pub fn get_db_connection() -> PooledConnection<ConnectionManager<SqliteConnection>> {
+    POOL.get().unwrap()
 }
 
 fn schema() -> UpdateHandler<Box<dyn std::error::Error + Send + Sync + 'static>> {

@@ -9,7 +9,7 @@ use crate::{
         diet_domain::KcPFC,
         profile_domain::{Gender, Goal, PhysicalActivityLevel},
     },
-    establish_connection,
+    get_db_connection,
     model::{
         usecases::{create_update_user, get_user},
         Food, NewUser, User, UserDiet,
@@ -119,7 +119,7 @@ pub async fn test_func1(bot: Bot, _dialogue: MyDialogue, msg: Message) -> Handle
 }
 
 pub async fn test_func2(bot: Bot, _dialogue: MyDialogue, msg: Message) -> HandlerResult {
-    let conn = &mut establish_connection();
+    let conn = &mut get_db_connection();
 
     let usrid = get_user_id(&msg).unwrap();
 
@@ -145,7 +145,7 @@ pub async fn test_func2(bot: Bot, _dialogue: MyDialogue, msg: Message) -> Handle
 }
 
 pub async fn test_func3(bot: Bot, _dialogue: MyDialogue, msg: Message) -> HandlerResult {
-    let conn = &mut establish_connection();
+    let conn = &mut get_db_connection();
 
     let usrid = get_user_id(&msg).unwrap();
 
