@@ -112,7 +112,7 @@ pub fn get_string_diets(diets: Vec<UserDiet>) -> String {
     }
 
     for d in diets {
-        str += &format!("\t{}: \n{}\n\n\n", d.name, d.diet);
+        str += &format!("{}: \n{}\n\n\n", d.name, d.diet);
     }
 
     str
