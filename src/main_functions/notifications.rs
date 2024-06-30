@@ -95,10 +95,9 @@ pub async fn notifications_choose_diet_parser(
                                 state: 0,
                             };
 
-                            if create_update_userdiet(conn, userdiet) {
-                                format!("Рацион выбран")
-                            } else {
-                                format!("Ошибка выбора рациона")
+                            match create_update_userdiet(conn, userdiet) {
+                                Ok(_) => format!("Рацион выбран"),
+                                Err(_) => format!("Ошибка выбора рациона"),
                             }
                         }
                         None => {

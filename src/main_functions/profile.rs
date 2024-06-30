@@ -282,10 +282,9 @@ pub async fn receive_goal(
 
                             bot.send_message(
                                 msg.chat.id,
-                                if create_update_user(conn, usr) {
-                                    "Успех"
-                                } else {
-                                    "Профиль не сохранен. Попробуйте еще раз"
+                                match create_update_user(conn, usr) {
+                                    Ok(_) => "Успех",
+                                    Err(_) => "Профиль не сохранен. Попробуйте еще раз",
                                 },
                             )
                             .await?;

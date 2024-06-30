@@ -135,8 +135,8 @@ pub async fn test_func2(bot: Bot, _dialogue: MyDialogue, msg: Message) -> Handle
             goal: String::new(),
         },
     ) {
-        true => log::info!("user added"),
-        false => log::info!("user wasn't add"),
+        Ok(_) => log::info!("user added"),
+        Err(_) => log::info!("user wasn't add"),
     }
 
     bot.send_message(msg.chat.id, "Все ок").await?;

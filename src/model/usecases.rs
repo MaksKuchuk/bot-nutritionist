@@ -1,44 +1,52 @@
 use diesel::query_dsl::methods::{FilterDsl, LimitDsl, SelectDsl};
-use diesel::{ExpressionMethods, RunQueryDsl, SelectableHelper};
+use diesel::result::Error;
+use diesel::{Connection, ExpressionMethods, RunQueryDsl, SelectableHelper};
 
 use crate::model::{Food, NewUser, User};
 use crate::DbConnection;
 
 use super::{ChoosenDiet, NewChoosenDiet, NewUserDiet, UserDiet};
 
-pub fn create_update_user(conn: &mut DbConnection, user: NewUser) -> bool {
+pub fn create_update_user(conn: &mut DbConnection, user: NewUser) -> Result<(), Error> {
     use crate::schema::Users::dsl::*;
 
-    match diesel::insert_into(Users).values(&user).execute(conn) {
-        Ok(_) => true,
-        _ => match diesel::update(Users)
-            .filter(id.eq(&user.id))
-            .set(&user)
-            .execute(conn)
-        {
-            Ok(_) => true,
-            _ => false,
-        },
-    }
+    conn.transaction::<_, Error, _>(|connection| {
+        match diesel::insert_into(Users).values(&user).execute(connection) {
+            Ok(_) => Ok(()),
+            _ => match diesel::update(Users)
+                .filter(id.eq(&user.id))
+                .set(&user)
+                .execute(connection)
+            {
+                Ok(_) => Ok(()),
+                _ => Err(Error::AlreadyInTransaction),
+            },
+        }
+    })
 }
 
-pub fn create_update_userdiet(conn: &mut DbConnection, userdiet: NewChoosenDiet) -> bool {
+pub fn create_update_userdiet(
+    conn: &mut DbConnection,
+    userdiet: NewChoosenDiet,
+) -> Result<(), Error> {
     use crate::schema::ChoosenDiets::dsl::*;
 
-    match diesel::insert_into(ChoosenDiets)
-        .values(&userdiet)
-        .execute(conn)
-    {
-        Ok(_) => true,
-        _ => match diesel::update(ChoosenDiets)
-            .filter(userid.eq(&userdiet.userid))
-            .set(&userdiet)
-            .execute(conn)
+    conn.transaction::<_, Error, _>(|connection| {
+        match diesel::insert_into(ChoosenDiets)
+            .values(&userdiet)
+            .execute(connection)
         {
-            Ok(_) => true,
-            _ => false,
-        },
-    }
+            Ok(_) => Ok(()),
+            _ => match diesel::update(ChoosenDiets)
+                .filter(userid.eq(&userdiet.userid))
+                .set(&userdiet)
+                .execute(connection)
+            {
+                Ok(_) => Ok(()),
+                _ => Err(Error::AlreadyInTransaction),
+            },
+        }
+    })
 }
 
 pub fn create_diet(conn: &mut DbConnection, user_diet: NewUserDiet) -> bool {
