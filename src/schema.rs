@@ -32,6 +32,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    NotificationsTime (id) {
+        id -> Integer,
+        userid -> Text,
+        time -> Text,
+    }
+}
+
+diesel::table! {
     UserDiets (id) {
         id -> Integer,
         userid -> Text,
@@ -56,6 +64,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     ChoosenDiets,
     DietExamples,
     Foods,
+    NotificationsTime,
     UserDiets,
     Users,
 );

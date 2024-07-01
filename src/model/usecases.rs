@@ -1,8 +1,10 @@
+use std::collections::HashSet;
+
 use diesel::query_dsl::methods::{FilterDsl, LimitDsl, SelectDsl};
 use diesel::result::Error;
 use diesel::{Connection, ExpressionMethods, RunQueryDsl, SelectableHelper};
 
-use crate::model::{Food, NewUser, User};
+use crate::model::{Food, NewNotificationsTime, NewUser, NotificationTime, User};
 use crate::schema::UserDiets;
 use crate::DbConnection;
 
@@ -29,10 +31,35 @@ pub fn create_update_user(conn: &mut DbConnection, user: NewUser) -> Result<(), 
 pub fn create_update_userdiet(
     conn: &mut DbConnection,
     userdiet: NewChoosenDiet,
+    v: Vec<String>,
 ) -> Result<(), Error> {
-    use crate::schema::ChoosenDiets::dsl::*;
-
     conn.transaction::<_, Error, _>(|connection| {
+        {
+            use crate::schema::NotificationsTime::dsl::*;
+            match diesel::delete(NotificationsTime.filter(userid.eq(&userdiet.userid)))
+                .execute(connection)
+            {
+                Err(_) => (),
+                _ => (),
+            };
+
+            if userdiet.state == 1 {
+                for t in v {
+                    match diesel::insert_into(NotificationsTime)
+                        .values(NewNotificationsTime {
+                            userid: userdiet.userid.clone(),
+                            time: t,
+                        })
+                        .execute(connection)
+                    {
+                        Err(_) => (),
+                        _ => (),
+                    };
+                }
+            }
+        }
+
+        use crate::schema::ChoosenDiets::dsl::*;
         match diesel::insert_into(ChoosenDiets)
             .values(&userdiet)
             .execute(connection)
@@ -140,9 +167,36 @@ pub fn get_choosen_diet(conn: &mut DbConnection, usrid: String) -> Option<Choose
     }
 }
 
-pub fn set_user_notification(conn: &mut DbConnection, usrid: String, st: i32) -> bool {
-    use crate::schema::ChoosenDiets::dsl::*;
+pub fn set_user_notification(
+    conn: &mut DbConnection,
+    usrid: String,
+    st: i32,
+    v: Vec<String>,
+) -> bool {
+    {
+        use crate::schema::NotificationsTime::dsl::*;
+        match diesel::delete(NotificationsTime.filter(userid.eq(&usrid))).execute(conn) {
+            Err(_) => (),
+            _ => (),
+        };
 
+        if st == 1 {
+            for t in v {
+                match diesel::insert_into(NotificationsTime)
+                    .values(NewNotificationsTime {
+                        userid: usrid.clone(),
+                        time: t,
+                    })
+                    .execute(conn)
+                {
+                    Err(_) => (),
+                    _ => (),
+                };
+            }
+        }
+    }
+
+    use crate::schema::ChoosenDiets::dsl::*;
     match diesel::update(ChoosenDiets)
         .filter(userid.eq(usrid))
         .set(state.eq(st))
@@ -187,4 +241,25 @@ pub fn get_food_by_category(conn: &mut DbConnection, cat: &str, amount: u32) -> 
         Ok(f) => Some(f),
         _ => None,
     }
+}
+
+pub fn get_set_userid_by_time(conn: &mut DbConnection, t: &str) -> HashSet<String> {
+    use crate::schema::NotificationsTime::dsl::*;
+
+    let res: Vec<NotificationTime> = match NotificationsTime
+        .filter(time.eq(t))
+        .select(NotificationTime::as_select())
+        .load(conn)
+    {
+        Ok(v) => v,
+        Err(_) => vec![],
+    };
+
+    let mut v: HashSet<String> = HashSet::new();
+
+    for nt in res {
+        v.insert(nt.userid);
+    }
+
+    v
 }

@@ -1,6 +1,9 @@
+use chrono::{self, Timelike};
+use core::time;
 use dotenv::dotenv;
 use lazy_static::lazy_static;
-use std::env;
+use model::usecases::get_set_userid_by_time;
+use std::{env, time::Duration};
 use teloxide::{
     dispatching::{
         dialogue::{self, InMemStorage},
@@ -58,13 +61,32 @@ pub fn get_connection_pool() -> Pool<ConnectionManager<DbConnection>> {
         .expect("Could not build connection pool")
 }
 
+pub fn create_notification_thread(bot: Bot) {
+    tokio::spawn(async move {
+        let conn = &mut get_db_connection();
+        loop {
+            let t = chrono::offset::Local::now();
+            let t = format!("{}:{}", t.hour(), t.minute());
+            let v = get_set_userid_by_time(conn, &t);
+            for userid in v {
+                let _ = bot
+                    .send_message(ChatId(userid.parse::<i64>().unwrap()), "Время приема пищи")
+                    .await;
+            }
+
+            tokio::time::sleep(Duration::from_secs(60)).await;
+        }
+    });
+}
+
 #[tokio::main]
 async fn main() {
     dotenv().ok();
     pretty_env_logger::init();
     log::info!("Starting nutritionist bot");
-
     let bot = Bot::from_env();
+
+    let _ = create_notification_thread(bot.clone());
 
     Dispatcher::builder(bot, schema())
         .dependencies(dptree::deps![InMemStorage::<State>::new()])

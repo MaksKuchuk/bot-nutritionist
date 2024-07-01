@@ -10,7 +10,7 @@ use crate::{
         NewChoosenDiet,
     },
     state::State,
-    utils::{create_keyboard, get_user_id},
+    utils::{create_keyboard, get_times_vec_from_diet, get_user_id},
     HandlerResult, MyDialogue,
 };
 
@@ -24,7 +24,7 @@ pub async fn notifications(bot: Bot, dialogue: MyDialogue, msg: Message) -> Hand
             let conn = &mut get_db_connection();
 
             let mut str = String::from(
-                    "Вы можете ключить уведомления, которые будут оповещать вас за 10 минут до приема пищи",
+                    "Вы можете ключить уведомления, которые будут оповещать вас во время начала приема пищи",
                 );
 
             let s;
@@ -95,7 +95,9 @@ pub async fn notifications_choose_diet_parser(
                                 state: 0,
                             };
 
-                            match create_update_userdiet(conn, userdiet) {
+                            let v = get_times_vec_from_diet(&d.diet);
+
+                            match create_update_userdiet(conn, userdiet, v) {
                                 Ok(_) => format!("Рацион выбран"),
                                 Err(_) => format!("Ошибка выбора рациона"),
                             }
@@ -125,7 +127,19 @@ pub async fn notifications_turn(
         Some(userid) => {
             let conn = &mut get_db_connection();
 
-            if set_user_notification(conn, userid, st) {
+            let dietid = match get_choosen_diet(conn, userid.clone()) {
+                Some(id) => id.dietid,
+                None => 0,
+            };
+
+            let diet = match get_diet_by_id(conn, dietid) {
+                Some(usrdiet) => usrdiet.diet,
+                None => "".to_string(),
+            };
+
+            let v = get_times_vec_from_diet(&diet);
+
+            if set_user_notification(conn, userid, st, v) {
                 match st {
                     1 => "Уведомления включены",
                     0 => "Уведомления выключены",

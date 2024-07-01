@@ -240,6 +240,17 @@ pub fn create_example_diet_string(diet: DietExample, kcpfc: KcPFC) -> String {
     s
 }
 
+pub fn get_times_vec_from_diet(diet: &str) -> Vec<String> {
+    let meals = diet.trim().split("\n\n");
+    let mut v: Vec<String> = Vec::new();
+    for meal in meals {
+        let time = meal.split("\n").next().unwrap();
+        v.push(time.trim().to_string());
+    }
+
+    v
+}
+
 pub async fn test_func1(bot: Bot, _dialogue: MyDialogue, msg: Message) -> HandlerResult {
     let _ = is_diet_right("8:20\nрис, 150, (2.9 25.2 0.4)\nтреска отварная, 50, (17.8 0 0.7)\nбелый хлеб, 50, (11 48 4)\n\n13:00\nгречка на воде, 150, (3.38 19.94 0.62)\nяйцо куриное вареное, 30, (13 1.12 10.61)\n\n19:10\nяблоко красное, 100, (0.4 17 0)\nбанан, 100, (1.2 22 0.2)");
     Ok(())

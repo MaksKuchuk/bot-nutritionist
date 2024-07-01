@@ -1,4 +1,3 @@
--- Your SQL goes here
 CREATE TABLE IF NOT EXISTS "Users" (
 	"id"	TEXT NOT NULL UNIQUE,
 	"gender"	TEXT NOT NULL,
@@ -41,6 +40,12 @@ CREATE TABLE IF NOT EXISTS "DietExamples" (
 	"carbohydrates"	INTEGER NOT NULL,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
+CREATE TABLE IF NOT EXISTS "NotificationsTime" (
+	"id"	INTEGER NOT NULL UNIQUE,
+	"userid"	TEXT NOT NULL,
+	"time"	TEXT NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
 INSERT INTO "Users" VALUES ('1114726232','Мужской',21,177,72,'Выше среднего','Поддержание веса');
 INSERT INTO "Foods" VALUES (1,'Баранина',203,16,15,0,'Мясопродукты');
 INSERT INTO "Foods" VALUES (2,'Свинина',316,16,28,1,'Мясопродукты');
@@ -77,6 +82,7 @@ INSERT INTO "Foods" VALUES (32,'Апельсиновый сок',45,1,0,10,'Со
 INSERT INTO "Foods" VALUES (33,'Грейпфрутовый сок',38,0,0,8,'Соки');
 INSERT INTO "Foods" VALUES (34,'Морковный сок',56,1,0,13,'Соки');
 INSERT INTO "Foods" VALUES (35,'Яблочный сок',46,1,0,10,'Соки');
+INSERT INTO "ChoosenDiets" VALUES ('1114726232',1,1);
 INSERT INTO "UserDiets" VALUES (1,'1114726232','рац','8:20
 рис, 150, (2.9 25.2 0.4)
 треска отварная, 50, (17.8 0 0.7)
@@ -89,19 +95,19 @@ INSERT INTO "UserDiets" VALUES (1,'1114726232','рац','8:20
 19:10
 яблоко красное, 100, (0.4 17 0)
 банан, 100, (1.2 22 0.2)');
-INSERT INTO "UserDiets" VALUES (2,'1114726232','рац2','9:20
+INSERT INTO "UserDiets" VALUES (2,'1114726232','рац2','8:20
 рис, 150, (2.9 25.2 0.4)
 треска отварная, 50, (17.8 0 0.7)
 белый хлеб, 50, (11 48 4)
 
-14:00
+13:00
 гречка на воде, 150, (3.38 19.94 0.62)
 яйцо куриное вареное, 30, (13 1.12 10.61)
 
-17:10
+19:10
 яблоко красное, 100, (0.4 17 0)
 банан, 100, (1.2 22 0.2)');
-INSERT INTO "DietExample" VALUES (1,'макароны, кета \ рис, курица, сыр брынза \ молоко, яблоко, минтай, апельсиновый сок','50, 100 \ 50, 50, 50 \ 200, 100, 100,  50',72,29,95);
+INSERT INTO "DietExamples" VALUES (1,'макароны, кета \ рис, курица, сыр брынза \ молоко, яблоко, минтай, апельсиновый сок','50, 100 \ 50, 50, 50 \ 200, 100, 100,  50',72,29,95);
 CREATE INDEX IF NOT EXISTS "UserId" ON "Users" (
 	"id"	ASC
 );

@@ -14,3 +14,4 @@ dotenv = "0.15.0"
 diesel = {version = "2.1.5", features = ["sqlite", "r2d2"]}
 lazy_static = {version = "1.5.0"}
 itertools = "0.13"
+chrono = "0.4.38"
